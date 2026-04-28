@@ -25,3 +25,17 @@ export const env = {
 };
 
 export const isProduction = env.nodeEnv === "production";
+
+if (isProduction) {
+  if (!process.env.MONGODB_URI) {
+    throw new Error("MONGODB_URI must be set in production.");
+  }
+
+  if (!process.env.JWT_SECRET || env.jwtSecret === "change-me-jwt-secret") {
+    throw new Error("JWT_SECRET must be set to a strong secret in production.");
+  }
+
+  if (!process.env.CLIENT_URL && !process.env.CORS_ORIGINS) {
+    throw new Error("CLIENT_URL or CORS_ORIGINS must be set in production.");
+  }
+}

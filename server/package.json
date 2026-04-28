@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "dev:watch": "nodemon src/server.js",
+    "build": "echo \"No build step required for the server\"",
     "start": "node src/server.js",
     "seed": "node src/scripts/seed.js",
     "test": "vitest run --pool=threads",
@@ -31,6 +32,8 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.3",
     "morgan": "^1.10.1"

@@ -6,6 +6,7 @@ import { Event } from "../models/Event.js";
 import { asyncHandler, HttpError } from "../utils/httpError.js";
 import { env } from "../config/env.js";
 import { getEventStatus } from "../utils/date.js";
+import { chatbotRateLimiter } from "../middleware/security.js";
 
 const router = Router();
 const CHATBOT_ENGINE_VERSION = "cc-chat-v4";
@@ -498,6 +499,7 @@ const classifyWithWit = async (message) => {
 router.post(
   "/ask",
   authenticate,
+  chatbotRateLimiter,
   asyncHandler(async (req, res) => {
     const { message, history } = req.body;
     const trimmedMessage = String(message || "").trim();
@@ -590,8 +592,7 @@ router.post(
     const eventsContext = rankedEvents
       .map(
         (event) =>
-          `- ${event.title} | Club: ${event.club?.name || "Unknown Club"} | Category: ${
-            event.category
+          `- ${event.title} | Club: ${event.club?.name || "Unknown Club"} | Category: ${event.category
           } | Date: ${new Date(event.date).toISOString()} | Venue: ${event.venue} | Status: ${getEventStatus(event.date)}`
       )
       .join("\n");

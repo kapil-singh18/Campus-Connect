@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { User } from "../models/User.js";
 import { authenticate } from "../middleware/auth.js";
+import { authRateLimiter } from "../middleware/security.js";
 import { asyncHandler, HttpError } from "../utils/httpError.js";
 import { createToken, toPublicUser } from "../utils/auth.js";
 
@@ -10,6 +11,7 @@ const ALLOWED_SIGNUP_ROLES = ["student", "manager"];
 
 router.post(
   "/signup",
+  authRateLimiter,
   asyncHandler(async (req, res) => {
     const { name, email, password, role } = req.body;
 
@@ -47,6 +49,7 @@ router.post(
 
 router.post(
   "/login",
+  authRateLimiter,
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 

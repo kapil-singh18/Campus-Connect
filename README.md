@@ -156,8 +156,10 @@ Covered:
 ### Backend on Render (Free Web Service)
 - Root directory: `server/`
 - Build command: `npm install`
-- Start command: `npm run start`
-- Add env variables from `server/.env.example`
+- Start command: `npm start`
+- Set `NODE_ENV=production`
+- Add `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_URL` or `CORS_ORIGINS`
+- Leave `GEMINI_API_KEY` and `WIT_API_TOKEN` empty unless you actually use those integrations
 
 ### Database on MongoDB Atlas (M0)
 - Create free M0 cluster

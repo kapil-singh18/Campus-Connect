@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes.js";
 import clubsRoutes from "./routes/clubs.routes.js";
@@ -11,10 +12,16 @@ import publicRoutes from "./routes/public.routes.js";
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { env } from "./config/env.js";
+import { apiRateLimiter } from "./middleware/security.js";
 
 const app = express();
 
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+
+app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
+app.use(apiRateLimiter);
 app.use(
   cors({
     origin(origin, callback) {
