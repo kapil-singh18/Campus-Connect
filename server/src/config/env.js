@@ -2,11 +2,24 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const normalizeOrigin = (value) => {
+  if (!value) return "";
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return trimmed.replace(/\/+$/, "");
+  }
+};
+
 const parseList = (value) => {
   if (!value) return [];
   return value
     .split(",")
-    .map((entry) => entry.trim())
+    .map((entry) => normalizeOrigin(entry))
     .filter(Boolean);
 };
 
@@ -16,7 +29,7 @@ export const env = {
   mongoUri: process.env.MONGODB_URI || "",
   jwtSecret: process.env.JWT_SECRET || "change-me-jwt-secret",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+  clientUrl: normalizeOrigin(process.env.CLIENT_URL || "http://localhost:5173"),
   corsOrigins: parseList(process.env.CORS_ORIGINS || process.env.CLIENT_URL),
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
