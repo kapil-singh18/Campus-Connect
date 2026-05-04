@@ -57,7 +57,7 @@ function EventCalendar({ events = [], selectedDate = "", onSelectDate }) {
   const selectedEntries = selectedDate ? groupedEvents[selectedDate] || [] : [];
 
   return (
-    <article className="card p-5">
+    <article className="card p-4 md:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">Month Calendar</h2>
@@ -94,7 +94,7 @@ function EventCalendar({ events = [], selectedDate = "", onSelectDate }) {
         ))}
       </div>
 
-      <div className="mt-2 grid grid-cols-7 gap-2">
+      <div className="mt-2 grid grid-cols-7 gap-1.5 md:gap-2">
         {cells.map((cell) => {
           const hasEvents = cell.events.length > 0;
           const isSelected = selectedDate === cell.key;
@@ -102,7 +102,7 @@ function EventCalendar({ events = [], selectedDate = "", onSelectDate }) {
             <button
               key={cell.key}
               type="button"
-              className={`min-h-20 rounded-lg border px-2 py-2 text-left transition ${
+              className={`min-h-16 rounded-lg border px-2 py-2 text-left transition ${
                 cell.inMonth
                   ? "border-[var(--border)] bg-[var(--panel)]"
                   : "border-[var(--border)] bg-[var(--panel-muted)] opacity-75"

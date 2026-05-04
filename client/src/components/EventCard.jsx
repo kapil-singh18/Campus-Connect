@@ -23,37 +23,40 @@ function EventCard({
 
   return (
     <article className="card fade-in flex h-full flex-col overflow-hidden">
-      <img src={event.posterUrl} alt={event.title} className="h-44 w-full object-cover" />
+      <img src={event.posterUrl} alt={event.title} className="h-40 w-full object-cover" />
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-lg font-bold">{event.title}</h3>
-          <span className={`rounded-full px-2 py-1 text-xs font-bold uppercase ${statusClass(event.status)}`}>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h3 className="text-base font-bold leading-snug">{event.title}</h3>
+          <span className={`rounded-full px-2 py-1 text-[11px] font-bold uppercase ${statusClass(event.status)}`}>
             {event.status}
           </span>
         </div>
-        <p className="mt-2 flex-1 text-sm text-[var(--muted)]">{event.description}</p>
-        <p className="mt-3 text-sm">
-          <span className="font-semibold">Date:</span> {formatDateTime(event.date)}
-        </p>
-        <p className="mt-1 text-sm">
-          <span className="font-semibold">Venue:</span> {event.venue}
-        </p>
-        <p className="mt-1 text-sm">
-          <span className="font-semibold">Category:</span> {event.category}
-        </p>
-        <p className="mt-1 text-sm">
-          <span className="font-semibold">Registrations:</span> {event.registrationCount} / {event.maxParticipants}
-        </p>
-        <p className="mt-1 text-sm">
-          <span className="font-semibold">Spots Left:</span> {event.spotsLeft ?? "-"}
-        </p>
-        <p className="mt-1 text-sm">
-          <span className="font-semibold">Deadline:</span> {formatDateTime(event.registrationDeadline)}
-        </p>
-        <p className="mt-1 text-sm">
-          <span className="font-semibold">Registration:</span>{" "}
-          {registrationStateLabel[event.registrationState] || "Open"}
-        </p>
+
+        <p className="mt-2 line-clamp-3 flex-1 text-sm text-[var(--muted)]">{event.description}</p>
+
+        <div className="mt-3 grid gap-1.5 text-sm">
+          <p>
+            <span className="font-semibold">Date:</span> {formatDateTime(event.date)}
+          </p>
+          <p>
+            <span className="font-semibold">Venue:</span> {event.venue}
+          </p>
+          <p>
+            <span className="font-semibold">Category:</span> {event.category}
+          </p>
+          <p>
+            <span className="font-semibold">Registrations:</span> {event.registrationCount} / {event.maxParticipants}
+          </p>
+          <p>
+            <span className="font-semibold">Spots Left:</span> {event.spotsLeft ?? "-"}
+          </p>
+          <p>
+            <span className="font-semibold">Deadline:</span> {formatDateTime(event.registrationDeadline)}
+          </p>
+          <p>
+            <span className="font-semibold">Registration:</span> {registrationStateLabel[event.registrationState] || "Open"}
+          </p>
+        </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Link to={`/events/${event.id}`} className="btn-secondary text-sm">
@@ -75,8 +78,8 @@ function EventCard({
                 : needsClubJoin
                   ? "Join Club First"
                   : event.registrationOpen
-                  ? "Register"
-                  : registrationStateLabel[event.registrationState] || "Closed"}
+                    ? "Register"
+                    : registrationStateLabel[event.registrationState] || "Closed"}
             </button>
           ) : null}
 
@@ -109,9 +112,8 @@ function EventCard({
 
         {needsClubJoin && clubId ? (
           <p className="mt-2 text-xs text-[var(--muted)]">
-            Join the club first to register.
-            {" "}
-            <Link to={`/clubs/${clubId}`} className="font-semibold text-[var(--accent)] underline">
+            Join the club first to register. {" "}
+            <Link to={`/clubs/${clubId}`} className="font-semibold underline" style={{ color: "var(--brand)" }}>
               Open club
             </Link>
           </p>

@@ -16,6 +16,7 @@ function SupportChatWindow({
   onOpenFull,
   onClose,
   compact = false,
+  fullPage = false,
 }) {
   const bottomRef = useRef(null);
 
@@ -49,22 +50,31 @@ function SupportChatWindow({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [effectiveMessages.length, loading]);
 
+  // For fullPage, fill the container; otherwise use fixed height
+  const chatAreaStyle = fullPage
+    ? { flex: 1, overflowY: "auto", background: "#f1f3f5", padding: "1rem 1.25rem" }
+    : { overflowY: "auto", background: "#f1f3f5", padding: "0.75rem", height: compact ? "20rem" : "62vh", minHeight: "28rem" };
+
+  const containerStyle = fullPage
+    ? { display: "flex", flexDirection: "column", height: "100%", background: "#fff" }
+    : { overflow: "hidden", borderRadius: "1rem", border: "1px solid #d6dde7", background: "#fff", boxShadow: "0 14px 34px rgba(15,23,42,0.17)", width: compact ? "22.2rem" : "100%" };
+
   return (
-    <section
-      className={`overflow-hidden rounded-2xl border border-[#d6dde7] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.17)] ${
-        compact ? "w-[22.2rem]" : "w-full"
-      }`}
-    >
-      <header className="flex items-center justify-between bg-[#2f78c8] px-4 py-3 text-white">
-        <p className="inline-flex items-center gap-2 text-sm font-bold">
+    <section style={containerStyle}>
+      {/* Header */}
+      <header style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: "#2f78c8", padding: "0.75rem 1rem", color: "#fff", flexShrink: 0,
+      }}>
+        <p style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", fontWeight: 700, margin: 0 }}>
           <SupportIcon className="h-5 w-5" />
-          Get Support
+          Campus AI Assistant
         </p>
-        <div className="flex items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {compact ? (
             <button
               type="button"
-              className="inline-flex h-8 items-center gap-1 rounded-md bg-white/20 px-2 text-xs font-semibold transition hover:bg-white/30"
+              style={{ display: "inline-flex", height: "2rem", alignItems: "center", gap: "0.25rem", borderRadius: "0.375rem", background: "rgba(255,255,255,0.2)", padding: "0 0.5rem", fontSize: "0.75rem", fontWeight: 600, color: "#fff", border: "none", cursor: "pointer" }}
               onClick={onOpenFull}
               title="Open full chat"
             >
@@ -74,56 +84,73 @@ function SupportChatWindow({
           ) : (
             <button
               type="button"
-              className="rounded-md bg-white/20 px-2.5 py-1 text-xs font-semibold transition hover:bg-white/30"
+              style={{ borderRadius: "0.375rem", background: "rgba(255,255,255,0.2)", padding: "0.25rem 0.625rem", fontSize: "0.75rem", fontWeight: 600, color: "#fff", border: "none", cursor: "pointer" }}
               onClick={onClearHistory}
             >
               Clear
             </button>
           )}
-          {compact ? (
+          {compact && (
             <button
               type="button"
-              className="grid h-8 w-8 place-items-center rounded-md bg-white/20 text-xs font-bold transition hover:bg-white/30"
+              style={{ display: "grid", placeItems: "center", height: "2rem", width: "2rem", borderRadius: "0.375rem", background: "rgba(255,255,255,0.2)", fontSize: "0.75rem", fontWeight: 700, color: "#fff", border: "none", cursor: "pointer" }}
               onClick={onClose}
               aria-label="Close chatbot"
               title="Close"
             >
-              X
+              ✕
             </button>
-          ) : null}
+          )}
         </div>
       </header>
 
-      <div className={`overflow-y-auto bg-[#f1f3f5] px-3 py-4 ${compact ? "h-[20rem]" : "h-[62vh] min-h-[28rem]"}`}>
+      {/* Messages */}
+      <div style={chatAreaStyle}>
         {effectiveMessages.map((message, index) => {
           const isUser = message.role === "user";
           return (
             <div
               key={`${message.role}-${index}-${message.createdAt || "0"}`}
-              className={`mb-3 flex items-end gap-2 ${isUser ? "justify-end" : "justify-start"}`}
+              style={{ marginBottom: "0.75rem", display: "flex", alignItems: "flex-end", gap: "0.5rem", justifyContent: isUser ? "flex-end" : "flex-start" }}
             >
-              {!isUser ? (
-                <img src={avatarImage} alt="Support" className="h-8 w-8 rounded-full object-cover shadow-sm" />
-              ) : null}
-
-              <div
-                className={`max-w-[79%] rounded-[10px] px-3 py-2 text-sm leading-relaxed shadow-sm ${
-                  isUser ? "bg-[#2f78c8] text-white" : "bg-[#ebedef] text-slate-800"
-                }`}
-              >
-                {isUser ? <p>{message.content}</p> : <FormattedMessage content={message.content} />}
+              {!isUser && (
+                <img src={avatarImage} alt="Support" style={{ height: "2rem", width: "2rem", borderRadius: "50%", objectFit: "cover", boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }} />
+              )}
+              <div style={{
+                maxWidth: "79%",
+                borderRadius: "0.625rem",
+                padding: "0.5rem 0.75rem",
+                fontSize: "0.875rem",
+                lineHeight: 1.6,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                background: isUser ? "#2f78c8" : "#ebedef",
+                color: isUser ? "#fff" : "#1e293b",
+              }}>
+                {isUser ? <p style={{ margin: 0 }}>{message.content}</p> : <FormattedMessage content={message.content} />}
               </div>
             </div>
           );
         })}
 
-        {showStarterSuggestions && latestBotIndex >= 0 ? (
-          <div className="mb-3 ml-10 flex max-w-[82%] flex-wrap gap-2">
+        {showStarterSuggestions && latestBotIndex >= 0 && (
+          <div style={{ marginBottom: "0.75rem", marginLeft: "2.5rem", display: "flex", flexWrap: "wrap", gap: "0.5rem", maxWidth: "82%" }}>
             {quickPrompts.map((prompt) => (
               <button
                 key={prompt}
                 type="button"
-                className="rounded-full border border-[#8fb4df] bg-[#f8fbff] px-3 py-1 text-xs font-semibold text-[#2f78c8] transition hover:bg-white"
+                style={{
+                  borderRadius: "9999px",
+                  border: "1px solid #8fb4df",
+                  background: "#f8fbff",
+                  padding: "0.25rem 0.75rem",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  color: "#2f78c8",
+                  cursor: "pointer",
+                  transition: "background 0.15s ease",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "#fff"}
+                onMouseLeave={e => e.currentTarget.style.background = "#f8fbff"}
                 onClick={() => onSend(prompt)}
                 disabled={loading}
               >
@@ -131,43 +158,74 @@ function SupportChatWindow({
               </button>
             ))}
           </div>
-        ) : null}
+        )}
 
-        {loading ? (
-          <div className="mb-3 flex items-end gap-2">
-            <img src={avatarImage} alt="Support" className="h-8 w-8 rounded-full object-cover shadow-sm" />
-            <p className="rounded-[10px] bg-[#ebedef] px-3 py-2 text-sm text-slate-700 shadow-sm">Typing...</p>
+        {loading && (
+          <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "flex-end", gap: "0.5rem" }}>
+            <img src={avatarImage} alt="Support" style={{ height: "2rem", width: "2rem", borderRadius: "50%", objectFit: "cover" }} />
+            <p style={{ borderRadius: "0.625rem", background: "#ebedef", padding: "0.5rem 0.75rem", fontSize: "0.875rem", color: "#475569", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: 0 }}>
+              Typing…
+            </p>
           </div>
-        ) : null}
+        )}
 
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-[#d6dde7] bg-white px-3 py-3">
+      {/* Input */}
+      <div style={{
+        borderTop: "1px solid #d6dde7",
+        background: "#fff",
+        padding: "0.75rem",
+        flexShrink: 0,
+      }}>
         <form
-          className="flex items-center gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSend();
-          }}
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+          onSubmit={(event) => { event.preventDefault(); onSend(); }}
         >
           <input
-            className="h-10 w-full rounded-lg border border-[#ccd4df] bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-[#7fa6d4] focus:ring-2 focus:ring-[#d7e7f9]"
+            style={{
+              height: "2.5rem",
+              width: "100%",
+              borderRadius: "0.5rem",
+              border: "1px solid #ccd4df",
+              background: "#fff",
+              padding: "0 0.75rem",
+              fontSize: "0.875rem",
+              color: "#1e293b",
+              outline: "none",
+              transition: "border-color 0.2s, box-shadow 0.2s",
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = "#7fa6d4"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(47,120,200,0.12)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#ccd4df"; e.currentTarget.style.boxShadow = "none"; }}
             value={input}
             onChange={(event) => onInputChange(event.target.value)}
-            placeholder="Type your message..."
+            placeholder="Type your question…"
             autoComplete="off"
           />
           <button
             type="submit"
-            className="inline-flex h-10 min-w-10 items-center justify-center rounded-lg bg-[#2f78c8] px-3 text-white transition hover:bg-[#266ab4] disabled:cursor-not-allowed disabled:opacity-70"
+            style={{
+              display: "inline-flex",
+              height: "2.5rem",
+              minWidth: "2.5rem",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "0.5rem",
+              background: loading || !input.trim() ? "#8fb4df" : "#2f78c8",
+              padding: "0 0.75rem",
+              color: "#fff",
+              border: "none",
+              cursor: loading || !input.trim() ? "not-allowed" : "pointer",
+              transition: "background 0.18s ease",
+            }}
             disabled={loading || !input.trim()}
             title="Send message"
           >
             <SendIcon />
           </button>
         </form>
-        {error ? <p className="mt-2 text-xs font-semibold text-red-700">{error}</p> : null}
+        {error && <p style={{ marginTop: "0.5rem", fontSize: "0.75rem", fontWeight: 600, color: "#dc2626" }}>{error}</p>}
       </div>
     </section>
   );

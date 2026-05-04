@@ -97,7 +97,7 @@ function ProfilePage() {
   };
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5">
+    <section className="page-section mx-auto space-y-5">
       <div className="fade-in">
         <h1 className="text-2xl font-extrabold">Profile Settings</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">Manage your account details and password.</p>

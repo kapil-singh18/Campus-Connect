@@ -108,8 +108,8 @@ function ClubDetailsPage() {
   const canViewMembers = user.role === "admin" || canManageClub;
 
   return (
-    <section className="space-y-5">
-      <article className="card fade-in p-6">
+    <section className="page-section-wide space-y-5">
+      <article className="card fade-in p-5 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold">{club.name}</h1>
@@ -157,14 +157,14 @@ function ClubDetailsPage() {
         ) : null}
       </article>
 
-      <article className="card fade-in p-6">
+      <article className="card fade-in p-5 md:p-6">
         <h2 className="text-xl font-bold">Club Events</h2>
         <div className="mt-4 space-y-3">
           {events.length ? (
             events.map((event) => (
               <div
                 key={event.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--border)] p-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--panel-muted)] p-3"
               >
                 <div>
                   <p className="font-semibold">{event.title}</p>
@@ -186,7 +186,7 @@ function ClubDetailsPage() {
       </article>
 
       {canViewMembers ? (
-        <article className="card fade-in p-6">
+        <article className="card fade-in p-5 md:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl font-bold">Member List</h2>
             <button

@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useChat } from "../context/ChatContext.jsx";
 import SupportChatWindow from "./SupportChatWindow.jsx";
 import { SupportIcon } from "./icons.jsx";
 
 function FloatingChatbot() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const { messages, loading, error, sendMessage } = useChat();
+
+  // Hide floating chatbot on Ask Doubt page (it's the full-page version)
+  if (location.pathname === "/ask-doubt") return null;
 
   const onSend = async (prefilledText = "") => {
     const resolved = String(prefilledText || input).trim();

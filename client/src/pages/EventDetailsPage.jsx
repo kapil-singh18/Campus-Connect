@@ -135,13 +135,13 @@ function EventDetailsPage() {
   const needsClubJoin = canRegister && !event.isRegistered && !event.isClubMember;
 
   return (
-    <section className="space-y-5">
+    <section className="page-section-wide space-y-5">
       <Link className="text-sm font-semibold text-[var(--muted)] underline" to="/events">
         Back to Events
       </Link>
       <article className="card fade-in overflow-hidden">
-        <img src={event.posterUrl} alt={event.title} className="h-72 w-full object-cover" />
-        <div className="p-6">
+        <img src={event.posterUrl} alt={event.title} className="h-60 w-full object-cover md:h-64" />
+        <div className="p-5 md:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h1 className="text-2xl font-extrabold">{event.title}</h1>
             <span className={`rounded-full px-3 py-1 text-xs font-extrabold uppercase ${statusClass(event.status)}`}>
@@ -243,7 +243,7 @@ function EventDetailsPage() {
       </article>
 
       {canManage ? (
-        <article className="card fade-in p-5">
+        <article className="card fade-in p-5 md:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-bold">Participant Details</h2>
             <button
