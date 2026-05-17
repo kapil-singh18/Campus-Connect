@@ -3,186 +3,128 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { CheckIcon } from "../components/icons.jsx";
 
-const NOTIFICATION_OPTIONS = [
-  { id: "event_reg",    label: "Event Registrations",     desc: "When someone registers for your event" },
-  { id: "club_join",    label: "Club Joins",              desc: "When someone joins your club" },
-  { id: "announcements",label: "Announcements",           desc: "Campus-wide announcements" },
-  { id: "reminders",    label: "Event Reminders",         desc: "24h before events you've registered for" },
-  { id: "leaderboard",  label: "Leaderboard Updates",     desc: "Weekly leaderboard position changes" },
-];
-
-const PRIVACY_OPTIONS = [
-  { id: "profile_public", label: "Public Profile",        desc: "Make your profile visible to all students" },
-  { id: "show_clubs",     label: "Show Club Memberships", desc: "Display clubs on your public profile" },
-  { id: "show_events",    label: "Show Event History",    desc: "Display your event attendance history" },
-];
-
-function Toggle({ checked, onChange }) {
+function Toggle({ checked, onChange, id }) {
   return (
     <button
+      id={id}
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       style={{
-        width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+        width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
         background: checked ? "var(--brand)" : "var(--border)",
-        position: "relative", transition: "background 0.2s ease", flexShrink: 0,
+        position: "relative", transition: "background 0.22s ease", flexShrink: 0,
       }}
     >
       <span style={{
-        position: "absolute", top: 3, left: checked ? 23 : 3,
-        width: 18, height: 18, borderRadius: "50%", background: "#fff",
-        transition: "left 0.2s ease", display: "block",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+        position: "absolute", top: 3, left: checked ? 21 : 3,
+        width: 16, height: 16, borderRadius: "50%", background: "#fff",
+        transition: "left 0.22s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
       }} />
     </button>
   );
 }
 
+function Row({ label, desc, right }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 0", borderBottom: "1px solid var(--border)" }}>
+      <div>
+        <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text)", margin: 0 }}>{label}</p>
+        {desc && <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "0.15rem" }}>{desc}</p>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
 function Section({ title, children }) {
   return (
-    <div className="card p-5">
-      <h2 className="mb-4" style={{ fontFamily: "Outfit,sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--text)" }}>
+    <div style={{ background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 12, padding: "1.25rem 1.5rem" }}>
+      <h2 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 700, fontSize: "0.9375rem", color: "var(--text)", margin: "0 0 0.25rem" }}>
         {title}
       </h2>
-      {children}
+      <div style={{ borderTop: "1px solid var(--border)", marginTop: "0.75rem" }}>
+        {children}
+      </div>
     </div>
   );
 }
 
 function SettingsPage() {
-  const { user, updateProfile } = useAuth();
+  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-
-  const [notifications, setNotifications] = useState({
-    event_reg: true, club_join: true, announcements: true, reminders: true, leaderboard: false,
-  });
-  const [privacy, setPrivacy] = useState({
-    profile_public: true, show_clubs: true, show_events: false,
-  });
-  const [accentColor, setAccentColor] = useState("blue");
+  const [notify, setNotify] = useState({ events: true, clubs: true, announcements: true });
   const [saved, setSaved] = useState(false);
 
-  const COLORS = [
-    { id: "blue",    label: "Blue",    hex: "#2f78c8" },
-    { id: "steel",   label: "Steel",   hex: "#1a5fa0" },
-    { id: "cyan",    label: "Cyan",    hex: "#0891b2" },
-    { id: "emerald", label: "Emerald", hex: "#059669" },
-    { id: "rose",    label: "Rose",    hex: "#e11d48" },
-  ];
-
-  const handleSave = async () => {
+  const handleSave = () => {
     setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setTimeout(() => setSaved(false), 2200);
   };
 
   return (
-    <div className="space-y-6 fade-in max-w-2xl">
+    <div style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: "1.25rem" }} className="fade-in">
       {/* Header */}
       <div>
-        <h1 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "1.75rem", color: "var(--text)" }}>
-          ⚙️ Settings
+        <h1 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "1.625rem", color: "var(--text)", margin: 0 }}>
+          Settings
         </h1>
-        <p style={{ color: "var(--muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
-          Manage your preferences and account settings
+        <p style={{ color: "var(--muted)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>
+          Manage your account preferences
         </p>
       </div>
 
       {/* Appearance */}
-      <Section title="🎨 Appearance">
-        <div className="space-y-4">
-          {/* Theme */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text)" }}>Dark Mode</p>
-              <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "0.15rem" }}>Toggle between light and dark themes</p>
-            </div>
-            <Toggle checked={theme === "dark"} onChange={toggleTheme} />
-          </div>
-
-          <hr style={{ border: "none", borderTop: "1px solid var(--border)" }} />
-
-          {/* Accent color */}
-          <div>
-            <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text)", marginBottom: "0.75rem" }}>Accent Color</p>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map((c) => (
-                <button key={c.id}
-                  title={c.label}
-                  onClick={() => setAccentColor(c.id)}
-                  style={{
-                    width: 32, height: 32, borderRadius: "50%", background: c.hex, border: "none", cursor: "pointer",
-                    outline: accentColor === c.id ? `3px solid ${c.hex}` : "3px solid transparent",
-                    outlineOffset: "2px", transition: "outline 0.15s ease", display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
-                >
-                  {accentColor === c.id && <CheckIcon className="h-4 w-4 text-white" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+      <Section title="Appearance">
+        <Row
+          label="Dark mode"
+          desc="Switch between light and dark themes"
+          right={<Toggle checked={theme === "dark"} onChange={toggleTheme} id="toggle-dark" />}
+        />
       </Section>
 
       {/* Notifications */}
-      <Section title="🔔 Notifications">
-        <div className="space-y-4">
-          {NOTIFICATION_OPTIONS.map((opt) => (
-            <div key={opt.id} className="flex items-center justify-between">
-              <div>
-                <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text)" }}>{opt.label}</p>
-                <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "0.1rem" }}>{opt.desc}</p>
-              </div>
-              <Toggle
-                checked={notifications[opt.id]}
-                onChange={(v) => setNotifications((prev) => ({ ...prev, [opt.id]: v }))}
-              />
-            </div>
-          ))}
-        </div>
+      <Section title="Notifications">
+        <Row
+          label="Event registrations"
+          desc="When someone registers for your event"
+          right={<Toggle checked={notify.events} onChange={v => setNotify(p => ({ ...p, events: v }))} id="toggle-events" />}
+        />
+        <Row
+          label="Club joins"
+          desc="When someone joins your club"
+          right={<Toggle checked={notify.clubs} onChange={v => setNotify(p => ({ ...p, clubs: v }))} id="toggle-clubs" />}
+        />
+        <Row
+          label="Announcements"
+          desc="Campus-wide announcements"
+          right={<Toggle checked={notify.announcements} onChange={v => setNotify(p => ({ ...p, announcements: v }))} id="toggle-announce" />}
+        />
       </Section>
 
-      {/* Privacy */}
-      <Section title="🔒 Privacy">
-        <div className="space-y-4">
-          {PRIVACY_OPTIONS.map((opt) => (
-            <div key={opt.id} className="flex items-center justify-between">
-              <div>
-                <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text)" }}>{opt.label}</p>
-                <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "0.1rem" }}>{opt.desc}</p>
-              </div>
-              <Toggle
-                checked={privacy[opt.id]}
-                onChange={(v) => setPrivacy((prev) => ({ ...prev, [opt.id]: v }))}
-              />
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Account info */}
-      <Section title="👤 Account">
-        <div className="space-y-3">
-          {[
-            { label: "Full Name",  value: user?.name  || "—" },
-            { label: "Email",      value: user?.email || "—" },
-            { label: "Role",       value: user?.role  || "—" },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--border-soft)" }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", fontWeight: 500 }}>{label}</span>
-              <span style={{ fontSize: "0.85rem", color: "var(--text)", fontWeight: 600, textTransform: "capitalize" }}>{value}</span>
-            </div>
-          ))}
-          <div className="pt-2">
-            <a href="/profile" className="btn-secondary text-sm">Edit Profile</a>
-          </div>
+      {/* Account */}
+      <Section title="Account">
+        <Row label="Full name" right={<span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text)" }}>{user?.name || "—"}</span>} />
+        <Row label="Email" right={<span style={{ fontSize: "0.8125rem", color: "var(--muted)" }}>{user?.email || "—"}</span>} />
+        <Row
+          label="Role"
+          right={
+            <span style={{
+              padding: "0.25rem 0.6rem", borderRadius: 999, fontSize: "0.7rem", fontWeight: 700,
+              background: "var(--brand-soft)", color: "var(--brand)", textTransform: "capitalize",
+            }}>
+              {user?.role || "—"}
+            </span>
+          }
+        />
+        <div style={{ paddingTop: "0.875rem" }}>
+          <a href="/profile" className="btn-secondary" style={{ fontSize: "0.8125rem" }}>Edit Profile</a>
         </div>
       </Section>
 
       {/* Save */}
-      <div className="flex justify-end">
-        <button onClick={handleSave} className="btn-primary gap-2">
-          {saved ? <><CheckIcon className="h-4 w-4" /> Saved!</> : "Save Preferences"}
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button onClick={handleSave} className="btn-primary" style={{ gap: "0.5rem" }}>
+          {saved ? <><CheckIcon className="h-4 w-4" /> Saved!</> : "Save preferences"}
         </button>
       </div>
     </div>

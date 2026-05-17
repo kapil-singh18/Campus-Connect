@@ -1,126 +1,42 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import CampusLogo from "../components/CampusLogo.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { LoginIcon, MoonIcon, SunIcon } from "../components/icons.jsx";
+import { CampusLogoMark } from "../components/CampusLogo.jsx";
 import api from "../api/http.js";
 import { formatDate } from "../utils/date.js";
 
-const roleCards = [
-  {
-    role: "Student",
-    title: "Explore and Register",
-    detail: "Discover clubs, join communities, and register for events in a guided flow.",
-  },
-  {
-    role: "Manager",
-    title: "Manage and Track",
-    detail: "Run club events, control registrations, and track participant activity in one place.",
-  },
-  {
-    role: "Admin",
-    title: "Platform Overview",
-    detail: "See complete campus activity with role-aware dashboards and notifications.",
-  },
-];
-
-const workflowSteps = [
-  {
-    id: "step-1",
-    title: "Create Profile",
-    detail: "Sign up with your role and login securely.",
-  },
-  {
-    id: "step-2",
-    title: "Explore Campus",
-    detail: "Browse clubs and upcoming events with filters.",
-  },
-  {
-    id: "step-3",
-    title: "Join and Register",
-    detail: "Students join clubs and register for events.",
-  },
-  {
-    id: "step-4",
-    title: "Track and Assist",
-    detail: "Use dashboard, notifications, and chatbot guidance.",
-  },
-];
-
-const trustItems = ["Live registrations", "Activity logs", "Manager notifications"];
-
 const fallbackPreview = {
   clubs: [
-    {
-      id: "fallback-club-1",
-      name: "CodeCraft Club",
-      category: "Technology",
-      description: "Collaborative coding and hackathon practice sessions.",
-      memberCount: 0,
-    },
-    {
-      id: "fallback-club-2",
-      name: "Campus Culture Collective",
-      category: "Cultural",
-      description: "Performances, open mic, and cultural event planning.",
-      memberCount: 0,
-    },
+    { id: "fc1", name: "CodeCraft Club", category: "Technology", description: "Collaborative coding and hackathon sessions.", memberCount: 42 },
+    { id: "fc2", name: "Campus Culture Collective", category: "Cultural", description: "Performances, open mic, and cultural planning.", memberCount: 28 },
   ],
   events: [
-    {
-      id: "fallback-event-1",
-      title: "Campus Hack Sprint",
-      club: "CodeCraft Club",
-      date: new Date().toISOString(),
-      status: "upcoming",
-      venue: "Innovation Lab",
-      posterUrl:
-        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1100&q=80",
-    },
-    {
-      id: "fallback-event-2",
-      title: "Open Mic Evening",
-      club: "Campus Culture Collective",
-      date: new Date().toISOString(),
-      status: "ongoing",
-      venue: "Main Auditorium",
-      posterUrl:
-        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1100&q=80",
-    },
+    { id: "fe1", title: "Campus Hack Sprint", club: "CodeCraft Club", date: new Date().toISOString(), status: "upcoming", venue: "Innovation Lab", posterUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" },
+    { id: "fe2", title: "Open Mic Evening", club: "Campus Culture Collective", date: new Date().toISOString(), status: "ongoing", venue: "Main Auditorium", posterUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80" },
   ],
 };
 
 const categoryPosterMap = {
-  technology:
-    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1100&q=80",
-  cultural:
-    "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&fit=crop&w=1100&q=80",
-  sports:
-    "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1100&q=80",
-  social:
-    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1100&q=80",
-  default:
-    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1100&q=80",
+  technology: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
+  cultural: "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&fit=crop&w=800&q=80",
+  sports: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80",
+  default: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
 };
 
 const getClubPoster = (club, events) => {
   const clubName = String(club?.name || "").trim().toLowerCase();
-  const linkedEventPoster = (events || []).find(
-    (event) =>
-      String(event?.club || "")
-        .trim()
-        .toLowerCase() === clubName && event?.posterUrl
+  const linked = (events || []).find(
+    (e) => String(e?.club || "").trim().toLowerCase() === clubName && e?.posterUrl
   )?.posterUrl;
-
-  if (linkedEventPoster) return linkedEventPoster;
-
-  const category = String(club?.category || "")
-    .trim()
-    .toLowerCase();
-  return categoryPosterMap[category] || categoryPosterMap.default;
+  if (linked) return linked;
+  const cat = String(club?.category || "").trim().toLowerCase();
+  return categoryPosterMap[cat] || categoryPosterMap.default;
 };
+
+
 
 function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -138,397 +54,293 @@ function LoginPage() {
 
   useEffect(() => {
     let mounted = true;
-
-    const loadLandingPreview = async () => {
+    (async () => {
       try {
-        const response = await api.get("/public/landing");
+        const res = await api.get("/public/landing");
         if (!mounted) return;
-
-        const clubs = Array.isArray(response.data?.clubs) ? response.data.clubs.slice(0, 4) : [];
-        const events = Array.isArray(response.data?.events) ? response.data.events.slice(0, 4) : [];
-
+        const clubs = Array.isArray(res.data?.clubs) ? res.data.clubs.slice(0, 4) : [];
+        const events = Array.isArray(res.data?.events) ? res.data.events.slice(0, 4) : [];
         if (clubs.length || events.length) {
-          setPreview({
-            clubs: clubs.length ? clubs : fallbackPreview.clubs,
-            events: events.length ? events : fallbackPreview.events,
-          });
+          setPreview({ clubs: clubs.length ? clubs : fallbackPreview.clubs, events: events.length ? events : fallbackPreview.events });
         }
-      } catch (_error) {
-        if (!mounted) return;
-        setPreview(fallbackPreview);
-      } finally {
-        if (mounted) setPreviewLoading(false);
-      }
-    };
-
-    loadLandingPreview();
-
-    return () => {
-      mounted = false;
-    };
+      } catch { if (mounted) setPreview(fallbackPreview); }
+      finally { if (mounted) setPreviewLoading(false); }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
-    const clubsLength = (preview.clubs || []).length || 1;
-    const eventsLength = (preview.events || []).length || 1;
-    setClubSlide((current) => current % clubsLength);
-    setEventSlide((current) => current % eventsLength);
-  }, [preview.clubs, preview.events]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setClubSlide((current) => current + 1);
-      setEventSlide((current) => current + 1);
-    }, 5500);
-
-    return () => clearInterval(interval);
+    const timer = setInterval(() => {
+      setClubSlide(c => c + 1);
+      setEventSlide(e => e + 1);
+    }, 5000);
+    return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const elements = document.querySelectorAll("[data-reveal]");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
-    );
+  const onChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-    elements.forEach((element, index) => {
-      element.classList.add("reveal-on-scroll");
-      element.style.setProperty("--reveal-delay", `${Math.min(index * 55, 330)}ms`);
-      observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const onChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError("");
     setLoading(true);
     try {
       await login(form);
       toast.success("Welcome back!");
-      const redirectTo = location.state?.from?.pathname || "/dashboard";
-      navigate(redirectTo, { replace: true });
-    } catch (submitError) {
-      const message = getErrorMessage(submitError);
-      setError(message);
-      toast.error(message, "Login failed");
-    } finally {
-      setLoading(false);
-    }
+      navigate(location.state?.from?.pathname || "/dashboard", { replace: true });
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      setError(msg);
+      toast.error(msg, "Login failed");
+    } finally { setLoading(false); }
   };
 
   const clubs = preview.clubs || [];
   const events = preview.events || [];
-  const clubsCount = clubs.length || 1;
-  const eventsCount = events.length || 1;
-  const activeClub = clubs[clubSlide % clubsCount] || fallbackPreview.clubs[0];
-  const activeEvent = events[eventSlide % eventsCount] || fallbackPreview.events[0];
-
-  const moveClubSlide = (direction) => {
-    setClubSlide((current) => (current + direction + clubsCount) % clubsCount);
-  };
-
-  const moveEventSlide = (direction) => {
-    setEventSlide((current) => (current + direction + eventsCount) % eventsCount);
-  };
+  const cc = clubs.length || 1;
+  const ec = events.length || 1;
+  const activeClub = clubs[clubSlide % cc] || fallbackPreview.clubs[0];
+  const activeEvent = events[eventSlide % ec] || fallbackPreview.events[0];
 
   return (
-    <section className="relative min-h-[calc(100vh-4rem)] overflow-hidden pb-5 pt-16 md:pb-7 md:pt-20">
-      <header className="fixed left-0 right-0 top-0 z-50 w-screen border-b border-[var(--border)] bg-[var(--panel)]/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 md:px-6">
-          <div className="flex items-center gap-3">
-            <CampusLogo compact />
-            <p className="hidden text-sm font-semibold text-[var(--muted)] sm:block">College Event & Club Manager</p>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)" }}>
+
+      {/* ── Top navigation ─────────────────────────────────────── */}
+      <header style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
+        borderBottom: "1px solid var(--border)",
+        background: "var(--panel)",
+        backdropFilter: "blur(12px)",
+      }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+            <CampusLogoMark size={34} pulse />
+            <div>
+              <p style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "0.95rem", color: "var(--text)", lineHeight: 1.1 }}>
+                Campus<span style={{ color: "var(--brand)" }}>Connect</span>
+              </p>
+              <p style={{ fontSize: "0.6rem", color: "var(--muted)", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}>College Hub</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <button
-              type="button"
               onClick={toggleTheme}
-              className="grid h-10 w-10 place-items-center rounded-full border border-[var(--border)] bg-[var(--panel-muted)] text-[var(--accent)] shadow-sm transition hover:-translate-y-px hover:border-[color-mix(in_srgb,var(--brand)_35%,var(--border))] hover:bg-[var(--brand-soft)]"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              style={{ display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--border)", background: "var(--panel-muted)", color: "var(--muted)", cursor: "pointer", transition: "all 0.2s ease" }}
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--brand-soft)"; e.currentTarget.style.color = "var(--brand)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--panel-muted)"; e.currentTarget.style.color = "var(--muted)"; }}
             >
-              {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+              {theme === "dark" ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
             </button>
-            <Link to="/login" className="btn-secondary px-4 py-2 text-sm">
-              Login
+            <Link to="/login" style={{
+              display: "inline-flex", alignItems: "center", gap: "0.4rem",
+              padding: "0.45rem 1rem", borderRadius: 8, fontSize: "0.8125rem", fontWeight: 600,
+              background: "var(--brand)", color: "#fff", border: "none", textDecoration: "none",
+              transition: "opacity 0.2s",
+            }}
+              onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+            >
+              Sign in
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="card overflow-hidden" data-reveal>
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_24rem]">
-          <article className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--panel-muted)] px-6 py-7 md:px-8 lg:border-b-0 lg:border-r">
-            <div className="pointer-events-none absolute right-6 top-6 h-44 w-44 rounded-full bg-[var(--brand-soft)]/85" />
-            <div className="pointer-events-none absolute -right-4 bottom-14 h-24 w-24 rounded-full border border-[var(--border)] bg-[var(--panel)]/70" />
-            <div className="pointer-events-none absolute bottom-7 left-8 h-2 w-20 rounded-full bg-[var(--brand)]/30" />
-            <div className="pointer-events-none absolute left-12 top-20 h-2 w-2 rounded-full bg-[var(--brand)]/45" />
-            <div className="pointer-events-none absolute left-16 top-28 h-2 w-2 rounded-full bg-[var(--brand)]/35" />
-            <div className="pointer-events-none absolute left-24 top-24 h-2 w-2 rounded-full bg-[var(--brand)]/25" />
+      {/* ── Hero + Login split ──────────────────────────────────── */}
+      <div style={{ paddingTop: 64, maxWidth: 1100, margin: "0 auto", padding: "80px 1.5rem 0" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "3rem", alignItems: "start", paddingTop: "3.5rem" }}>
 
-            <div className="relative max-w-2xl">
-              <span className="inline-flex rounded-full border border-[var(--border)] bg-[var(--panel)] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--accent)]">
-                Calm. Modern. Student-first.
-              </span>
-              <h1 className="mt-4 text-3xl font-extrabold leading-tight md:text-5xl">Welcome to Campus Connect</h1>
-              <p className="mt-4 text-base leading-relaxed text-[var(--muted)] md:text-lg">
-                A calm and modern campus platform for clubs, events, and student participation.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--muted)] md:text-base">
-                Campus Connect keeps activities organized with clean dashboards, guided registrations, and one assistant
-                for event planning support.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {trustItems.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-[var(--border)] bg-[var(--panel)] px-3 py-1 text-xs font-semibold text-[var(--muted)]"
-                  >
-                    {item}
-                  </span>
+          {/* Left — Hero copy */}
+          <div>
+            <span style={{
+              display: "inline-block", padding: "0.25rem 0.75rem",
+              borderRadius: 999, fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+              background: "var(--brand-soft)", color: "var(--brand)", border: "1px solid var(--glass-border)",
+              marginBottom: "1.25rem",
+            }}>
+              Your campus, organised
+            </span>
+
+            <h1 style={{
+              fontFamily: "Outfit,sans-serif", fontWeight: 900, lineHeight: 1.1,
+              fontSize: "clamp(2.25rem, 5vw, 3.5rem)", color: "var(--text)", margin: 0,
+            }}>
+              One platform for<br />
+              <span style={{ color: "var(--brand)" }}>clubs, events</span><br />
+              & everything campus.
+            </h1>
+
+            <p style={{ marginTop: "1.25rem", fontSize: "1rem", color: "var(--muted)", lineHeight: 1.7, maxWidth: 480 }}>
+              Campus Connect keeps college life organised — from club registrations to event management, all in one calm, modern dashboard.
+            </p>
+
+            <div style={{ marginTop: "2rem", display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+              {["Live registrations", "Club management", "Event calendar", "AI assistant"].map(tag => (
+                <span key={tag} style={{
+                  padding: "0.35rem 0.85rem", borderRadius: 999, fontSize: "0.75rem", fontWeight: 600,
+                  background: "var(--panel)", border: "1px solid var(--border)", color: "var(--muted)",
+                }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Preview cards */}
+            <div style={{ marginTop: "2.5rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              {/* Club preview */}
+              <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)", background: "var(--panel)" }}>
+                <div style={{ padding: "0.75rem 1rem 0.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>Featured Club</span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button onClick={() => setClubSlide(c => (c - 1 + cc) % cc)} style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid var(--border)", background: "var(--panel-muted)", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "var(--muted)" }} disabled={cc < 2}>‹</button>
+                    <button onClick={() => setClubSlide(c => (c + 1) % cc)} style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid var(--border)", background: "var(--panel-muted)", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "var(--muted)" }} disabled={cc < 2}>›</button>
+                  </div>
+                </div>
+                <div style={{ position: "relative", height: 110, background: "#0f172a" }}>
+                  <img src={getClubPoster(activeClub, events)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.65 }} />
+                  <div style={{ position: "absolute", inset: 0, padding: "0.65rem 0.8rem", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                    <p style={{ color: "#fff", fontWeight: 700, fontSize: "0.8125rem", margin: 0 }}>{activeClub.name}</p>
+                    <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "0.7rem", marginTop: 2 }}>{activeClub.category} · {activeClub.memberCount ?? 0} members</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Event preview */}
+              <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)", background: "var(--panel)" }}>
+                <div style={{ padding: "0.75rem 1rem 0.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>Upcoming Event</span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button onClick={() => setEventSlide(e => (e - 1 + ec) % ec)} style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid var(--border)", background: "var(--panel-muted)", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "var(--muted)" }} disabled={ec < 2}>‹</button>
+                    <button onClick={() => setEventSlide(e => (e + 1) % ec)} style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid var(--border)", background: "var(--panel-muted)", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "var(--muted)" }} disabled={ec < 2}>›</button>
+                  </div>
+                </div>
+                <div style={{ position: "relative", height: 110, background: "#0f172a" }}>
+                  <img src={activeEvent.posterUrl || categoryPosterMap.default} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.65 }} />
+                  <div style={{ position: "absolute", inset: 0, padding: "0.65rem 0.8rem", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                    <p style={{ color: "#fff", fontWeight: 700, fontSize: "0.8125rem", margin: 0 }}>{activeEvent.title}</p>
+                    <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "0.7rem", marginTop: 2 }}>{activeEvent.venue} · {formatDate(activeEvent.date)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* How it works — compact */}
+            <div style={{ marginTop: "2.5rem" }}>
+              <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.875rem" }}>How it works</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem" }}>
+                {[
+                  { step: "01", label: "Create Profile" },
+                  { step: "02", label: "Explore Campus" },
+                  { step: "03", label: "Join & Register" },
+                  { step: "04", label: "Track Activity" },
+                ].map(({ step, label }) => (
+                  <div key={step} style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid var(--border)", background: "var(--panel)", textAlign: "center" }}>
+                    <span style={{ fontSize: "0.65rem", fontWeight: 800, color: "var(--brand)", letterSpacing: "0.05em" }}>{step}</span>
+                    <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text)", marginTop: 4 }}>{label}</p>
+                  </div>
                 ))}
               </div>
             </div>
-          </article>
+          </div>
 
-          <aside className="bg-[var(--panel)] p-5 md:p-6">
-            <div className="inline-flex rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--accent)]">
-              Secure Access
+          {/* Right — Login form */}
+          <div style={{
+            borderRadius: 16, border: "1px solid var(--border)", background: "var(--panel)",
+            padding: "2rem 1.75rem",
+            boxShadow: "0 4px 24px rgba(47,120,200,0.08)",
+            position: "sticky", top: 88,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "1.5rem" }}>
+              <CampusLogoMark size={30} />
+              <div>
+                <p style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "0.875rem", color: "var(--text)", lineHeight: 1.1 }}>Campus Connect</p>
+                <p style={{ fontSize: "0.625rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Secure access</p>
+              </div>
             </div>
-            <h2 className="mt-3 text-2xl font-extrabold">Login</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">Welcome back. Continue to your dashboard.</p>
 
-            <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
-              <label className="block text-sm font-semibold">
-                Email
+            <h2 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "1.375rem", color: "var(--text)", margin: 0 }}>Welcome back</h2>
+            <p style={{ fontSize: "0.8125rem", color: "var(--muted)", marginTop: "0.25rem", marginBottom: "1.5rem" }}>Sign in to your dashboard</p>
+
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text)" }}>Email</span>
                 <input
-                  className="field mt-1"
+                  className="field"
                   name="email"
                   type="email"
                   required
                   value={form.email}
                   onChange={onChange}
+                  placeholder="you@university.edu"
                 />
               </label>
-              <label className="block text-sm font-semibold">
-                Password
+              <label style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text)" }}>Password</span>
                 <input
-                  className="field mt-1"
+                  className="field"
                   name="password"
                   type="password"
                   required
                   value={form.password}
                   onChange={onChange}
+                  placeholder="••••••••"
                 />
               </label>
-              {error ? <p className="text-sm font-semibold text-red-700 dark:text-red-300">{error}</p> : null}
-              <button type="submit" className="btn-primary flex w-full items-center justify-center gap-2" disabled={loading}>
+              {error && (
+                <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--danger)", margin: 0 }}>{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+                  padding: "0.7rem 1.25rem", borderRadius: 10, fontSize: "0.875rem", fontWeight: 700,
+                  background: "var(--brand)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading ? 0.7 : 1, transition: "opacity 0.2s, transform 0.15s ease",
+                  marginTop: "0.25rem",
+                }}
+                onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
+              >
                 <LoginIcon />
-                <span>{loading ? "Logging in..." : "Login to Campus Connect"}</span>
+                {loading ? "Signing in…" : "Sign in"}
               </button>
             </form>
 
-            <p className="mt-4 text-sm text-[var(--muted)]">
-              New user?{" "}
-              <Link className="font-bold text-[var(--text)] underline" to="/signup">
-                Create an account
-              </Link>
-            </p>
-          </aside>
-        </div>
-      </div>
-
-      <div className="card mt-5 relative overflow-hidden p-6 md:p-7" data-reveal>
-        <div className="pointer-events-none absolute -right-12 -top-10 h-40 w-40 rounded-full bg-[var(--brand-soft)]/65" />
-        <div className="pointer-events-none absolute bottom-8 left-6 h-14 w-14 rounded-full border border-[var(--border)] bg-[var(--panel)]/75" />
-        <h2 className="text-xl font-extrabold text-[var(--accent)]">Campus Highlights</h2>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          Preview core capabilities before sign in with a clean snapshot of clubs, events, and access roles.
-        </p>
-
-        <div className="relative mt-5 grid gap-3 md:grid-cols-3">
-          {roleCards.map((item, index) => (
-            <article
-              key={item.role}
-              className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel-muted)] p-4 shadow-sm"
-              data-reveal
-              style={{ animationDelay: `${index * 120}ms` }}
-            >
-              <span className="pointer-events-none absolute -right-4 -top-4 h-12 w-12 rounded-full bg-[var(--brand-soft)]/80" />
-              <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--muted)]">{item.role}</p>
-              <h3 className="mt-1 text-sm font-extrabold text-[var(--accent)]">{item.title}</h3>
-              <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">{item.detail}</p>
-            </article>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-3 lg:grid-cols-2">
-          <article className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] p-4" data-reveal>
-            <span className="pointer-events-none absolute right-3 top-3 h-1.5 w-14 rounded-full bg-[var(--brand)]/25" />
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-extrabold text-[var(--accent)]">Featured Clubs</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="rounded-md border border-[var(--border)] bg-[var(--panel-muted)] px-2 py-1 text-xs font-bold"
-                  onClick={() => moveClubSlide(-1)}
-                  disabled={clubs.length < 2}
-                  aria-label="Previous club"
-                >
-                  &lt;
-                </button>
-                <button
-                  type="button"
-                  className="rounded-md border border-[var(--border)] bg-[var(--panel-muted)] px-2 py-1 text-xs font-bold"
-                  onClick={() => moveClubSlide(1)}
-                  disabled={clubs.length < 2}
-                  aria-label="Next club"
-                >
-                  &gt;
-                </button>
-                <Link to="/signup" className="text-xs font-semibold text-[var(--accent)] underline">
-                  Join now
+            <div style={{ marginTop: "1.25rem", paddingTop: "1.25rem", borderTop: "1px solid var(--border)", textAlign: "center" }}>
+              <p style={{ fontSize: "0.8125rem", color: "var(--muted)" }}>
+                New to Campus Connect?{" "}
+                <Link to="/signup" style={{ color: "var(--brand)", fontWeight: 700, textDecoration: "none" }}>
+                  Create account
                 </Link>
-              </div>
+              </p>
             </div>
 
-            <article className="relative min-h-[10.5rem] overflow-hidden rounded-lg border border-[var(--border)]">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${getClubPoster(activeClub, events)})` }}
-              />
-              <div className="absolute inset-0 bg-slate-950/52" />
-              <div className="relative p-3 text-white">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-bold">{activeClub.name}</p>
-                  <span className="rounded-full border border-white/35 bg-white/15 px-2 py-0.5 text-[11px] font-bold">
-                    {activeClub.category}
-                  </span>
-                </div>
-                <p className="mt-1 line-clamp-2 text-xs text-white/90">{activeClub.description}</p>
-                <p className="mt-1 text-[11px] font-semibold text-white/90">Members: {activeClub.memberCount ?? 0}</p>
-              </div>
-            </article>
-
-            <div className="mt-3 flex items-center gap-1.5">
-              {clubs.map((club, index) => (
-                <button
-                  key={club.id}
-                  type="button"
-                  className={`h-2.5 w-2.5 rounded-full border border-[var(--border)] ${index === clubSlide % clubsCount ? "bg-[var(--brand)]" : "bg-[var(--panel-muted)]"
-                    }`}
-                  onClick={() => setClubSlide(index)}
-                  aria-label={`Go to club ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            {previewLoading ? <p className="mt-2 text-xs text-[var(--muted)]">Loading live clubs...</p> : null}
-          </article>
-
-          <article className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] p-4" data-reveal>
-            <span className="pointer-events-none absolute right-3 top-3 h-1.5 w-14 rounded-full bg-[var(--brand)]/25" />
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-extrabold text-[var(--accent)]">Upcoming Events</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="rounded-md border border-[var(--border)] bg-[var(--panel-muted)] px-2 py-1 text-xs font-bold"
-                  onClick={() => moveEventSlide(-1)}
-                  disabled={events.length < 2}
-                  aria-label="Previous event"
-                >
-                  &lt;
-                </button>
-                <button
-                  type="button"
-                  className="rounded-md border border-[var(--border)] bg-[var(--panel-muted)] px-2 py-1 text-xs font-bold"
-                  onClick={() => moveEventSlide(1)}
-                  disabled={events.length < 2}
-                  aria-label="Next event"
-                >
-                  &gt;
-                </button>
-                <Link to="/signup" className="text-xs font-semibold text-[var(--accent)] underline">
-                  Explore
-                </Link>
-              </div>
-            </div>
-
-            <article className="relative min-h-[10.5rem] overflow-hidden rounded-lg border border-[var(--border)]">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${activeEvent.posterUrl || categoryPosterMap.default})` }}
-              />
-              <div className="absolute inset-0 bg-slate-950/55" />
-              <div className="relative p-3 text-white">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-bold">{activeEvent.title}</p>
-                  <span className="rounded-full border border-white/35 bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase">
-                    {activeEvent.status}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-white/90">
-                  {activeEvent.club} | {activeEvent.venue}
-                </p>
-                <p className="mt-1 text-[11px] font-semibold text-white/90">{formatDate(activeEvent.date)}</p>
-              </div>
-            </article>
-
-            <div className="mt-3 flex items-center gap-1.5">
-              {events.map((event, index) => (
-                <button
-                  key={event.id}
-                  type="button"
-                  className={`h-2.5 w-2.5 rounded-full border border-[var(--border)] ${index === eventSlide % eventsCount ? "bg-[var(--brand)]" : "bg-[var(--panel-muted)]"
-                    }`}
-                  onClick={() => setEventSlide(index)}
-                  aria-label={`Go to event ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            {previewLoading ? <p className="mt-2 text-xs text-[var(--muted)]">Loading live events...</p> : null}
-          </article>
-        </div>
-
-        <article className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-4" data-reveal>
-          <h3 className="text-sm font-extrabold text-[var(--accent)]">How Campus Connect Works</h3>
-          <div className="mt-4 relative">
-            <div className="absolute left-3 top-3 bottom-3 w-px bg-[var(--border)] md:hidden" />
-            <div className="absolute left-8 right-8 top-5 hidden h-px bg-[var(--border)] md:block" />
-            <div className="grid gap-3 md:grid-cols-4">
-              {workflowSteps.map((step, index) => (
-                <div
-                  key={step.id}
-                  className="relative rounded-lg border border-[var(--border)] bg-[var(--panel-muted)] p-3 pl-12 md:pl-3 md:pt-11"
-                >
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full bg-[var(--brand)] text-xs font-extrabold text-white md:left-1/2 md:top-2.5 md:-translate-x-1/2 md:translate-y-0">
-                    {index + 1}
-                  </span>
-                  <p className="text-sm font-bold">{step.title}</p>
-                  <p className="mt-1 text-xs text-[var(--muted)]">{step.detail}</p>
+            {/* Role info */}
+            <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {[
+                { role: "Student", desc: "Explore clubs & events" },
+                { role: "Manager", desc: "Manage club events" },
+                { role: "Admin", desc: "Full platform access" },
+              ].map(({ role, desc }) => (
+                <div key={role} style={{ display: "flex", alignItems: "center", gap: "0.625rem", padding: "0.5rem 0.625rem", borderRadius: 8, background: "var(--panel-muted)" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", flexShrink: 0 }} />
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)", minWidth: 60 }}>{role}</span>
+                  <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>{desc}</span>
                 </div>
               ))}
             </div>
           </div>
-        </article>
+        </div>
       </div>
-    </section>
+
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <footer style={{ marginTop: "5rem", borderTop: "1px solid var(--border)", padding: "1.5rem", textAlign: "center" }}>
+        <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+          © {new Date().getFullYear()} Campus Connect · Built for student communities
+        </p>
+      </footer>
+    </div>
   );
 }
 

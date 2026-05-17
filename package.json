@@ -1,21 +1,24 @@
 {
-  "name": "playground",
+  "name": "campus-connect",
   "version": "1.0.0",
-  "description": "Campus Connect monorepo",
+  "description": "Campus Connect – College Event & Club Manager (MERN)",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "build": "npm run build --prefix client",
+    "start": "npm run start --prefix server",
     "test": "npm run test --prefix server",
     "seed": "npm run seed --prefix server",
     "client": "npm run dev --prefix client",
-    "server": "npm run dev --prefix server"
+    "server": "npm run dev --prefix server",
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
+    "ci": "npm run install:all && npm run build"
   },
-  "keywords": [
-    "mern",
-    "campus-connect"
-  ],
-  "author": "",
+  "keywords": ["mern", "campus-connect", "college", "clubs", "events"],
+  "author": "Campus Connect",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^9.2.1"

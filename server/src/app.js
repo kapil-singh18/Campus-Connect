@@ -9,6 +9,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import chatbotRoutes from "./routes/chatbot.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
 import publicRoutes from "./routes/public.routes.js";
+import leaderboardRoutes from "./routes/leaderboard.routes.js";
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { env } from "./config/env.js";
@@ -45,6 +46,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/clubs", clubsRoutes);
 app.use("/api/events", eventsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/notifications", notificationsRoutes);
 

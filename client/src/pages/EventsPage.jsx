@@ -197,51 +197,53 @@ function EventsPage() {
 
   return (
     <section className="page-section-wide space-y-5">
-      {/* ── Page Header ── */}
-      <div className="fade-in flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "1.75rem", color: "var(--text)" }}>
-            Events
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            {isStudent && `You're registered for ${registeredCount} event${registeredCount !== 1 ? "s" : ""}. `}
-            {canCreate && `You manage ${managedCount} event${managedCount !== 1 ? "s" : ""}. `}
-            {openCount > 0 && `${openCount} event${openCount !== 1 ? "s" : ""} open for registration.`}
-          </p>
-        </div>
-        {canCreate && (
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={openCreate}
-            disabled={!availableClubs.length}
-            title={!availableClubs.length ? "No clubs available to create events for" : ""}
-          >
-            <PlusIcon className="h-4 w-4" />
-            Create Event
-          </button>
-        )}
-      </div>
+      {/* ── Page Header + Stats inline ── */}
+      <div className="fade-in">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+          {/* Left: title + subtitle */}
+          <div>
+            <h1 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "1.75rem", color: "var(--text)", margin: 0 }}>
+              Events
+            </h1>
+            <p style={{ marginTop: "0.2rem", fontSize: "0.8125rem", color: "var(--muted)" }}>
+              {isStudent && `Registered for ${registeredCount} event${registeredCount !== 1 ? "s" : ""}. `}
+              {canCreate && `Managing ${managedCount} event${managedCount !== 1 ? "s" : ""}. `}
+              {openCount > 0 && `${openCount} open for registration.`}
+            </p>
+          </div>
 
-      {/* ── Role Summary Stats ── */}
-      {!loading && (
-        <div className="fade-in grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: "Total Events",   value: events.length,    color: "#2f78c8", bg: "#f0f6ff", icon: "📅" },
-            { label: "Open for Reg.",  value: openCount,        color: "#059669", bg: "#ecfdf5", icon: "✅" },
-            ...(isStudent ? [{ label: "Registered",   value: registeredCount, color: "#1a5fa0", bg: "#e8f1fb", icon: "🎫" }] : []),
-            ...(canCreate ? [{ label: "Managed",      value: managedCount,    color: "#d97706", bg: "#fffbeb", icon: "⚙" }] : []),
-          ].map((s) => (
-            <div key={s.label} className="card p-4 flex items-center gap-3" style={{ borderLeft: `3px solid ${s.color}` }}>
-              <span className="text-xl">{s.icon}</span>
-              <div>
-                <p className="text-xl font-extrabold" style={{ color: s.color, fontFamily: "Outfit,sans-serif" }}>{s.value}</p>
-                <p className="text-xs font-medium" style={{ color: "var(--muted)" }}>{s.label}</p>
+          {/* Right: compact stat pills + create button */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+            {!loading && [
+              { label: "Total", value: events.length, color: "#2f78c8" },
+              { label: "Open", value: openCount, color: "#059669" },
+              ...(isStudent ? [{ label: "Mine", value: registeredCount, color: "#1a5fa0" }] : []),
+              ...(canCreate ? [{ label: "Managed", value: managedCount, color: "#d97706" }] : []),
+            ].map(s => (
+              <div key={s.label} style={{
+                display: "flex", alignItems: "center", gap: "0.375rem",
+                padding: "0.35rem 0.75rem", borderRadius: 999,
+                border: "1px solid var(--border)", background: "var(--panel)",
+              }}>
+                <span style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: "0.9rem", color: s.color }}>{s.value}</span>
+                <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--muted)" }}>{s.label}</span>
               </div>
-            </div>
-          ))}
+            ))}
+            {canCreate && (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={openCreate}
+                disabled={!availableClubs.length}
+                title={!availableClubs.length ? "No clubs available to create events for" : ""}
+              >
+                <PlusIcon className="h-4 w-4" />
+                Create Event
+              </button>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {/* ── Tabs ── */}
       <div className="fade-in flex gap-0 border-b border-[var(--border)] overflow-x-auto">
