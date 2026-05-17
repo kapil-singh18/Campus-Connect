@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import api from "../api/http.js";
@@ -35,7 +36,7 @@ function NavBar() {
       const response = await api.get("/notifications");
       setNotifications(response.data.notifications || []);
       setUnreadCount(response.data.unreadCount || 0);
-    } catch (_error) {
+    } catch {
       setNotifications([]);
       setUnreadCount(0);
     }
@@ -71,7 +72,7 @@ function NavBar() {
     try {
       await api.post("/notifications/read-all");
       await loadNotifications();
-    } catch (_error) {
+    } catch {
       // noop
     }
   };
@@ -80,7 +81,7 @@ function NavBar() {
     if (!notification.read) {
       try {
         await api.patch(`/notifications/${notification.id}/read`);
-      } catch (_error) {
+      } catch {
         // noop
       }
     }

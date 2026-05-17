@@ -60,6 +60,7 @@ function AppInner() {
       {/* Main content — hidden for fullscreen routes (they self-position) */}
       {!isFullscreen && (
         <main
+          className="app-main"
           style={user ? {
             marginLeft: "var(--sidebar-w, 260px)",
             paddingTop: "calc(var(--topbar-h, 64px) + 1.5rem)",

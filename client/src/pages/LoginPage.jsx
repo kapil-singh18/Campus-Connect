@@ -43,7 +43,6 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(fallbackPreview);
-  const [previewLoading, setPreviewLoading] = useState(true);
   const [clubSlide, setClubSlide] = useState(0);
   const [eventSlide, setEventSlide] = useState(0);
   const { login, getErrorMessage } = useAuth();
@@ -64,7 +63,6 @@ function LoginPage() {
           setPreview({ clubs: clubs.length ? clubs : fallbackPreview.clubs, events: events.length ? events : fallbackPreview.events });
         }
       } catch { if (mounted) setPreview(fallbackPreview); }
-      finally { if (mounted) setPreviewLoading(false); }
     })();
     return () => { mounted = false; };
   }, []);

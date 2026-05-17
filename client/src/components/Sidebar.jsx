@@ -1,7 +1,5 @@
-import { useMemo } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { useTheme } from "../context/ThemeContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import {
   HomeIcon, SchoolIcon, CalendarIcon, QuestionIcon,
@@ -17,19 +15,16 @@ const NAV_ITEMS = [
   { to: "/ask-doubt",   label: "Ask Doubt",    icon: QuestionIcon },
 ];
 
-
+const getInitials = (name = "") =>
+  name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() || "U";
 
 function Sidebar() {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const toast = useToast();
   const navigate = useNavigate();
 
-  const roleLabel = useMemo(() => String(user?.role || "").toUpperCase(), [user?.role]);
-  const initials = useMemo(() => {
-    if (!user?.name) return "U";
-    return user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
-  }, [user?.name]);
+  const roleLabel = String(user?.role || "").toUpperCase();
+  const initials = getInitials(user?.name);
 
   const handleLogout = () => {
     logout();
@@ -39,6 +34,7 @@ function Sidebar() {
 
   return (
     <aside
+      className="app-sidebar"
       style={{
         position: "fixed", left: 0, top: 0, zIndex: 100, height: "100vh",
         width: "var(--sidebar-w, 260px)",
@@ -73,23 +69,26 @@ function Sidebar() {
         <p style={{ fontSize: "0.575rem", fontWeight: 700, color: "var(--muted)", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.25rem 0.75rem 0.5rem" }}>
           Navigation
         </p>
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => [
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 group",
-              isActive ? "text-white" : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--brand-soft)]",
-            ].join(" ")}
-            style={({ isActive }) => isActive
-              ? { background: "linear-gradient(135deg,#2f78c8,#1a5fa0)", boxShadow: "0 4px 12px rgba(47,120,200,0.28)" }
-              : {}}
-          >
-            <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-            <span style={{ fontFamily: "Inter,sans-serif" }}>{label}</span>
-            <ChevronRightIcon className="ml-auto h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-          </NavLink>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const NavIcon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => [
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 group",
+                isActive ? "text-white" : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--brand-soft)]",
+              ].join(" ")}
+              style={({ isActive }) => isActive
+                ? { background: "linear-gradient(135deg,#2f78c8,#1a5fa0)", boxShadow: "0 4px 12px rgba(47,120,200,0.28)" }
+                : {}}
+            >
+              <NavIcon className="h-[18px] w-[18px] flex-shrink-0" />
+              <span style={{ fontFamily: "Inter,sans-serif" }}>{item.label}</span>
+              <ChevronRightIcon className="ml-auto h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Bottom section */}

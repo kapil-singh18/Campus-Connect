@@ -27,8 +27,6 @@ function EventsPage() {
 
   const canCreate  = user.role === "admin" || user.role === "manager";
   const canRegister = user.role === "student";
-  const isAdmin    = user.role === "admin";
-  const isManager  = user.role === "manager";
   const isStudent  = user.role === "student";
 
   const fetchEvents = async (activeFilters = filters) => {

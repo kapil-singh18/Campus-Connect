@@ -1,4 +1,4 @@
-import { useId, useRef } from "react";
+import { useId } from "react";
 
 /* ─────────────────────────────────────────────
    CampusLogoMark  —  icon only (no text)

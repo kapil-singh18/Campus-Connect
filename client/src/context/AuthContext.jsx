@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import api, { tokenStorageKey } from "../api/http.js";
 
@@ -21,7 +22,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await api.get("/auth/me");
         setUser(response.data.user);
-      } catch (_error) {
+      } catch {
         localStorage.removeItem(tokenStorageKey);
       } finally {
         setLoading(false);

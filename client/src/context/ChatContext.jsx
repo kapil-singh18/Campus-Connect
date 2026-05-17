@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import api from "../api/http.js";
 import { useAuth } from "./AuthContext.jsx";
@@ -19,7 +20,7 @@ const readStoredHistory = () => {
           ? entry.suggestions.map((item) => String(item)).slice(0, 3)
           : [],
       }));
-  } catch (_error) {
+  } catch {
     return [];
   }
 };

@@ -22,6 +22,7 @@ function AreaChart({
   formatValue = (v) => v,
 }) {
   const svgRef = useRef(null);
+  const pathRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const [drawn, setDrawn] = useState(!animated);
 
@@ -85,9 +86,6 @@ function AreaChart({
   const gradId = `area-grad-${color.replace("#", "")}`;
   const grad2Id = `area-grad2-${secondaryColor.replace("#", "")}`;
 
-  // Animated path length trick
-  const pathRef = useRef(null);
-
   return (
     <div style={{ position: "relative", width: "100%" }}>
       <svg
@@ -148,7 +146,7 @@ function AreaChart({
         {/* Dots */}
         {showDots && points.map((pt, i) => (
           <g key={i}
-            onMouseEnter={(e) => {
+            onMouseEnter={() => {
               const rect = svgRef.current?.getBoundingClientRect();
               if (!rect) return;
               setTooltip({ x: pt.x, y: pt.y, value: pt.value, label: pt.label, idx: i });

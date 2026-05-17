@@ -47,27 +47,26 @@ const CATEGORY_DIST = [
 function DonutChart({ data }) {
   const R = 54; const CX = 70; const CY = 70; const stroke = 18;
   const circumference = 2 * Math.PI * R;
-  let offset = 0;
+  const segments = data.reduce((acc, item) => {
+    const dash = (item.pct / 100) * circumference;
+    const offset = acc.length ? acc[acc.length - 1].offset + acc[acc.length - 1].dash : 0;
+    acc.push({ ...item, dash, offset, gap: circumference - dash });
+    return acc;
+  }, []);
   return (
     <div className="flex items-center gap-6">
       <svg viewBox="0 0 140 140" style={{ width: 140, height: 140, flexShrink: 0 }}>
         <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--border)" strokeWidth={stroke} />
-        {data.map((d, i) => {
-          const dash = (d.pct / 100) * circumference;
-          const gap  = circumference - dash;
-          const el = (
+        {segments.map((segment, i) => (
             <circle key={i} cx={CX} cy={CY} r={R} fill="none"
-              stroke={d.color} strokeWidth={stroke}
-              strokeDasharray={`${dash} ${gap}`}
-              strokeDashoffset={-offset}
+              stroke={segment.color} strokeWidth={stroke}
+              strokeDasharray={`${segment.dash} ${segment.gap}`}
+              strokeDashoffset={-segment.offset}
               strokeLinecap="butt"
               transform={`rotate(-90 ${CX} ${CY})`}
               style={{ transition: "stroke-dasharray 0.8s ease" }}
             />
-          );
-          offset += dash;
-          return el;
-        })}
+        ))}
         <text x={CX} y={CY - 6} textAnchor="middle" style={{ fontFamily: "Outfit,sans-serif", fontWeight: 800, fontSize: 18, fill: "var(--text)" }}>
           {data.reduce((a, d) => a + d.pct, 0)}%
         </text>

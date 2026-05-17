@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/http.js";
@@ -111,7 +112,7 @@ function TopNotificationBar() {
 
   return (
     <header
-      className="fixed right-0 top-0 z-[90] flex items-center justify-between px-6 transition-all duration-300"
+      className="app-topbar fixed right-0 top-0 z-[90] flex items-center justify-between px-6 transition-all duration-300"
       style={{
         left: "var(--sidebar-w, 260px)",
         height: "var(--topbar-h, 64px)",

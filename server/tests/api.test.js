@@ -360,6 +360,59 @@ describe("Campus Connect API", () => {
     expect(registerRes.status).toBe(409);
   });
 
+  it("builds leaderboard from real users, clubs, and registrations", async () => {
+    const manager = await createUser({ role: "manager", email: "leader-manager@test.local" });
+    const activeStudent = await createUser({ role: "student", email: "leader-active@test.local" });
+    const inactiveStudent = await createUser({ role: "student", email: "leader-inactive@test.local" });
+
+    const club = await Club.create({
+      name: "Leaderboard Club",
+      description: "desc",
+      category: "Technology",
+      manager: manager._id,
+      members: [activeStudent._id],
+    });
+
+    await User.findByIdAndUpdate(activeStudent._id, {
+      $addToSet: { joinedClubs: club._id },
+    });
+
+    const event = await Event.create({
+      club: club._id,
+      title: "Leaderboard Event",
+      description: "desc",
+      category: "Technology",
+      date: eventDate,
+      venue: "Hall 5",
+      maxParticipants: 40,
+      registrationDeadline,
+      posterUrl: "https://example.com/poster.png",
+      createdBy: manager._id,
+    });
+
+    await Registration.create({
+      user: activeStudent._id,
+      event: event._id,
+      club: club._id,
+      name: activeStudent.name,
+      email: activeStudent.email,
+      department: "Computer Science",
+      year: "3rd Year",
+    });
+
+    const token = createToken(activeStudent._id.toString());
+    const res = await request(app)
+      .get("/api/leaderboard")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.students).toHaveLength(1);
+    expect(res.body.students[0].email).toBe(activeStudent.email);
+    expect(res.body.students[0].points).toBeGreaterThan(0);
+    expect(res.body.students.find((student) => student.email === inactiveStudent.email)).toBeUndefined();
+    expect(res.body.clubs[0].name).toBe("Leaderboard Club");
+  });
+
   it("prevents club deletion when upcoming events exist", async () => {
     const manager = await createUser({ role: "manager", email: "guardmanager@test.local" });
     const club = await Club.create({
