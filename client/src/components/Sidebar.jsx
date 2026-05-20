@@ -4,6 +4,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import {
   HomeIcon, SchoolIcon, CalendarIcon, QuestionIcon,
   LogoutIcon, TrophyIcon, SettingsIcon, ChevronRightIcon,
+  MegaphoneIcon,
 } from "./icons.jsx";
 import { CampusLogoMark } from "./CampusLogo.jsx";
 
@@ -11,6 +12,7 @@ const NAV_ITEMS = [
   { to: "/dashboard",   label: "Dashboard",   icon: HomeIcon },
   { to: "/clubs",       label: "Clubs",        icon: SchoolIcon },
   { to: "/events",      label: "Events",       icon: CalendarIcon },
+  { to: "/announcements", label: "Announcements", icon: MegaphoneIcon },
   { to: "/leaderboard", label: "Leaderboard",  icon: TrophyIcon },
   { to: "/ask-doubt",   label: "Ask Doubt",    icon: QuestionIcon },
 ];

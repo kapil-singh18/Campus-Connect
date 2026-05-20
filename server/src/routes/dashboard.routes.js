@@ -5,6 +5,8 @@ import { Event } from "../models/Event.js";
 import { Registration } from "../models/Registration.js";
 import { User } from "../models/User.js";
 import { ActivityLog } from "../models/ActivityLog.js";
+import { Announcement } from "../models/Announcement.js";
+import { JoinRequest } from "../models/JoinRequest.js";
 import { asyncHandler } from "../utils/httpError.js";
 import { getEventStatus } from "../utils/date.js";
 
@@ -48,7 +50,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const clubs = await Club.find({ manager: req.user._id }).sort({ createdAt: -1 });
     const clubIds = clubs.map((club) => club._id);
-    const [events, activityLogs] = await Promise.all([
+    const [events, activityLogs, pendingJoinRequests, announcements] = await Promise.all([
       Event.find({ club: { $in: clubIds } })
         .sort({ date: 1 })
         .populate("club", "name"),
@@ -56,6 +58,11 @@ router.get(
         .sort({ createdAt: -1 })
         .limit(10)
         .select("actorName action details createdAt"),
+      JoinRequest.countDocuments({ manager: req.user._id, status: "pending" }),
+      Announcement.find({ club: { $in: clubIds } })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate("club", "name"),
     ]);
 
     const counts = events.length
@@ -75,6 +82,7 @@ router.get(
         managedClubs: clubs.length,
         managedEvents: events.length,
         totalRegistrations: counts.reduce((sum, row) => sum + row.count, 0),
+        pendingJoinRequests,
       },
       clubs: clubs.map((club) => ({
         id: club._id,
@@ -97,6 +105,13 @@ router.get(
         action: log.action,
         details: log.details,
         createdAt: log.createdAt,
+      })),
+      announcements: announcements.map((announcement) => ({
+        id: announcement._id,
+        title: announcement.title,
+        content: announcement.content,
+        club: announcement.club?.name || "Unknown Club",
+        createdAt: announcement.createdAt,
       })),
     });
   })
@@ -126,6 +141,13 @@ router.get(
       .sort({ date: 1 })
       .limit(6)
       .populate("club", "name");
+
+    const announcements = joinedClubs.length
+      ? await Announcement.find({ club: { $in: joinedClubs.map((club) => club._id) } })
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .populate("club", "name")
+      : [];
 
     res.json({
       stats: {
@@ -157,6 +179,13 @@ router.get(
         category: event.category,
         club: event.club?.name || "Unknown Club",
         status: getEventStatus(event.date),
+      })),
+      announcements: announcements.map((announcement) => ({
+        id: announcement._id,
+        title: announcement.title,
+        content: announcement.content,
+        club: announcement.club?.name || "Unknown Club",
+        createdAt: announcement.createdAt,
       })),
     });
   })

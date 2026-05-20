@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../api/http.js";
 import { formatDateTime } from "../utils/date.js";
@@ -20,7 +20,7 @@ function ClubDetailsPage() {
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get(`/clubs/${id}`);
@@ -34,11 +34,9 @@ function ClubDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, toast]);
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleJoin = async (details) => {
     try {

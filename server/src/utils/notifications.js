@@ -9,13 +9,14 @@ export const createNotifications = async ({
   entityType,
   entityId,
   meta = {},
+  includeActor = false,
 }) => {
   const actor = String(actorId);
   const deduped = Array.from(
     new Set(
       (recipientIds || [])
         .map((recipientId) => String(recipientId))
-        .filter((recipientId) => recipientId && recipientId !== actor)
+        .filter((recipientId) => recipientId && (includeActor || recipientId !== actor))
     )
   );
 

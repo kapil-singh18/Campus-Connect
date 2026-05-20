@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../api/http.js";
 import EventCard from "../components/EventCard.jsx";
 import EventCalendar from "../components/EventCalendar.jsx";
@@ -29,7 +29,7 @@ function EventsPage() {
   const canRegister = user.role === "student";
   const isStudent  = user.role === "student";
 
-  const fetchEvents = async (activeFilters = filters) => {
+  const fetchEvents = useCallback(async (activeFilters = filters) => {
     setLoading(true);
     try {
       const params = Object.fromEntries(
@@ -45,17 +45,17 @@ function EventsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, toast]);
 
-  const fetchClubs = async () => {
+  const fetchClubs = useCallback(async () => {
     if (!canCreate) return;
     try {
       const response = await api.get("/clubs");
       setClubs(response.data.clubs || []);
     } catch { setClubs([]); }
-  };
+  }, [canCreate]);
 
-  useEffect(() => { fetchEvents(); fetchClubs(); }, []);
+  useEffect(() => { fetchEvents(); fetchClubs(); }, [fetchEvents, fetchClubs]);
 
   const availableClubs = useMemo(() => {
     if (user.role === "admin") return clubs;

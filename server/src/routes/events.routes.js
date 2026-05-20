@@ -10,6 +10,7 @@ import { toStartOfDay, toEndOfDay } from "../utils/date.js";
 import { toEventView } from "../utils/eventView.js";
 import { createNotifications } from "../utils/notifications.js";
 import { createActivityLog } from "../utils/activityLog.js";
+import { awardPoints } from "../utils/points.js";
 
 const router = Router();
 
@@ -508,6 +509,41 @@ router.post(
         },
       },
     });
+
+    await createNotifications({
+      actorId: req.user._id,
+      actorName: req.user.name,
+      recipientIds: [req.user._id],
+      type: "event_register",
+      message: `Registration successful for ${event.title}.`,
+      entityType: "event",
+      entityId: event._id,
+      meta: {
+        eventTitle: event.title,
+        clubName: event.club?.name,
+      },
+      includeActor: true,
+    });
+
+    await awardPoints({
+      userId: req.user._id,
+      role: "student",
+      reason: "event_register",
+      entityType: "event",
+      entityId: event._id,
+      message: "+20 Points Earned for event registration.",
+    });
+
+    if (event.club?.manager) {
+      await awardPoints({
+        userId: event.club.manager,
+        role: "manager",
+        reason: "event_register",
+        entityType: "event",
+        entityId: event._id,
+        message: "+20 Points Earned for a new event registration.",
+      });
+    }
     res.status(201).json({
       message: "Event registration successful.",
       registrationCount,

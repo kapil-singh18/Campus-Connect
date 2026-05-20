@@ -5,6 +5,7 @@ import { authenticate } from "../middleware/auth.js";
 import { authRateLimiter } from "../middleware/security.js";
 import { asyncHandler, HttpError } from "../utils/httpError.js";
 import { createToken, toPublicUser } from "../utils/auth.js";
+import { awardPoints } from "../utils/points.js";
 
 const router = Router();
 const ALLOWED_SIGNUP_ROLES = ["student", "manager"];
@@ -39,6 +40,12 @@ router.post(
     });
 
     const token = createToken(user._id.toString());
+    await awardPoints({
+      userId: user._id,
+      role: user.role,
+      reason: "signup",
+      message: "+10 Points Earned for signup.",
+    });
 
     res.status(201).json({
       token,
@@ -68,6 +75,12 @@ router.post(
     }
 
     const token = createToken(user._id.toString());
+    await awardPoints({
+      userId: user._id,
+      role: user.role,
+      reason: "login",
+      message: "+10 Points Earned for login.",
+    });
 
     res.json({
       token,

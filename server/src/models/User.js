@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
         ref: "Club",
       },
     ],
+    points: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

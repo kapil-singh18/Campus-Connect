@@ -20,7 +20,17 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["club_join", "club_leave", "event_register", "event_unregister"],
+      enum: [
+        "club_join",
+        "club_leave",
+        "join_request",
+        "join_request_accepted",
+        "join_request_rejected",
+        "event_register",
+        "event_unregister",
+        "announcement",
+        "points_earned",
+      ],
       required: true,
     },
     message: {
@@ -31,7 +41,7 @@ const notificationSchema = new mongoose.Schema(
     },
     entityType: {
       type: String,
-      enum: ["club", "event"],
+      enum: ["club", "event", "announcement", "join_request", "points"],
       required: true,
     },
     entityId: {

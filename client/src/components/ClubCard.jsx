@@ -51,6 +51,12 @@ function ClubCard({ club, canJoin, canLeave, onJoin, onLeave, joining, isManaged
             <span className="font-semibold text-green-600 dark:text-green-400">You're a member</span>
           </p>
         )}
+        {club.joinRequestStatus === "pending" && (
+          <p className="flex items-center gap-1">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span className="font-semibold text-amber-600 dark:text-amber-300">Join request pending</span>
+          </p>
+        )}
       </div>
 
       {/* Actions */}
@@ -60,7 +66,7 @@ function ClubCard({ club, canJoin, canLeave, onJoin, onLeave, joining, isManaged
         </Link>
         {canJoin && (
           <button type="button" className="btn-primary text-sm flex-1 justify-center" disabled={joining} onClick={onJoin}>
-            {joining ? "Joining..." : "Join Club"}
+            {joining ? "Sending..." : "Join Club"}
           </button>
         )}
         {canLeave && (

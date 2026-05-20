@@ -15,6 +15,7 @@ import EventDetailsPage from "./pages/EventDetailsPage.jsx";
 import AskDoubtPage from "./pages/AskDoubtPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
+import AnnouncementsPage from "./pages/AnnouncementsPage.jsx";
 
 import LeaderboardPage from "./pages/LeaderboardPage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
@@ -86,6 +87,7 @@ function AppInner() {
             <Route path="/events"        element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
             <Route path="/events/:id"    element={<ProtectedRoute><EventDetailsPage /></ProtectedRoute>} />
             <Route path="/profile"       element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/announcements" element={<ProtectedRoute><AnnouncementsPage /></ProtectedRoute>} />
 
             <Route path="/leaderboard"   element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
             <Route path="/settings"      element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

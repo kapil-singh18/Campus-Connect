@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/http.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 import AreaChart from "../components/AreaChart.jsx";
 import EmptyState from "../components/EmptyState.jsx";
@@ -74,6 +75,7 @@ const STAT_MAP = {
     { key: "managedClubs",      label: "Managed Clubs",   icon: SchoolIcon,  color: "indigo",  trend: null },
     { key: "managedEvents",     label: "Managed Events",  icon: CalendarIcon,color: "steel",   trend: 8, trendLabel: "this semester" },
     { key: "totalRegistrations",label: "Registrations",   icon: ZapIcon,     color: "cyan",    trend: 15, trendLabel: "vs last month" },
+    { key: "pendingJoinRequests", label: "Join Requests", icon: BellIcon, color: "emerald", trend: null },
   ],
   student: [
     { key: "joinedClubs",      label: "Joined Clubs",       icon: SchoolIcon,  color: "indigo",  trend: null },
@@ -84,8 +86,10 @@ const STAT_MAP = {
 /* ─── Component ────────────────────────────────────────────────── */
 function DashboardPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [data, setData] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [joinRequests, setJoinRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeChart, setActiveChart] = useState("registrations");
@@ -96,6 +100,10 @@ function DashboardPage() {
       try {
         const response = await api.get(`/dashboard/${user.role}`);
         setData(response.data);
+        if (user.role === "manager") {
+          const requests = await api.get("/clubs/join-requests");
+          setJoinRequests(requests.data.requests || []);
+        }
       } catch (e) {
         setError(e?.response?.data?.message || "Unable to load dashboard.");
       } finally {
@@ -126,6 +134,19 @@ function DashboardPage() {
   }, [activeChart]);
 
   const titleByRole = { admin: "Admin Dashboard", manager: "Club Manager", student: "My Dashboard" };
+
+  const handleJoinRequest = async (requestId, action) => {
+    try {
+      await api.patch(`/clubs/join-requests/${requestId}`, { action });
+      const requests = await api.get("/clubs/join-requests");
+      setJoinRequests(requests.data.requests || []);
+      const dashboard = await api.get(`/dashboard/${user.role}`);
+      setData(dashboard.data);
+      toast.success(action === "accept" ? "Join request accepted." : "Join request rejected.");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Unable to review request.");
+    }
+  };
 
   /* ─── Loading skeleton ─────────────────────── */
   if (loading) {
@@ -171,8 +192,8 @@ function DashboardPage() {
             <CalendarIcon className="h-4 w-4" /> Browse Events
           </Link>
           {(user.role === "admin" || user.role === "manager") && (
-            <Link to="/events" className="btn-primary">
-              <PlusIcon className="h-4 w-4" /> New Event
+            <Link to="/announcements" className="btn-primary">
+              <PlusIcon className="h-4 w-4" /> Make Announcement
             </Link>
           )}
         </div>
@@ -428,6 +449,38 @@ function DashboardPage() {
           </div>
         </div>
       ) : null}
+
+      {user.role === "manager" && (
+        <div className="card p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--text)" }}>
+              Join Requests
+            </h2>
+            <span className="badge badge-brand">{joinRequests.length} pending</span>
+          </div>
+          {joinRequests.length ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              {joinRequests.map((request) => (
+                <article key={request.id} className="rounded-xl p-4" style={{ border: "1px solid var(--border)", background: "var(--panel-muted)" }}>
+                  <p className="text-sm font-bold text-[var(--text)]">{request.studentMeta?.name || request.student?.name}</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">{request.club?.name} - {request.studentMeta?.department || "Department not provided"}</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">{request.studentMeta?.email || request.student?.email}</p>
+                  <div className="mt-3 flex gap-2">
+                    <button className="btn-primary text-xs" type="button" onClick={() => handleJoinRequest(request.id, "accept")}>
+                      Accept
+                    </button>
+                    <button className="btn-ghost text-xs text-red-600" type="button" onClick={() => handleJoinRequest(request.id, "reject")}>
+                      Reject
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[var(--muted)]">No pending join requests right now.</p>
+          )}
+        </div>
+      )}
 
       {/* ── Student: Joined Clubs ─────────────────────── */}
       {user.role === "student" && data?.clubs?.length ? (

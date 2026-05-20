@@ -18,7 +18,7 @@ function Metric({ icon, label, value }) {
 
 function LeaderboardPage() {
   const [tab, setTab] = useState("students");
-  const [data, setData] = useState({ students: [], clubs: [], generatedFrom: {} });
+  const [data, setData] = useState({ students: [], managers: [], clubs: [], generatedFrom: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -31,6 +31,7 @@ function LeaderboardPage() {
         if (alive) {
           setData({
             students: response.data.students || [],
+            managers: response.data.managers || [],
             clubs: response.data.clubs || [],
             generatedFrom: response.data.generatedFrom || {},
           });
@@ -54,7 +55,7 @@ function LeaderboardPage() {
     return [second, first, third].filter(Boolean);
   }, [data.students]);
 
-  const activeRows = tab === "students" ? data.students : data.clubs;
+  const activeRows = tab === "students" ? data.students : tab === "managers" ? data.managers : data.clubs;
 
   return (
     <div className="leaderboard-page fade-in">
@@ -69,7 +70,7 @@ function LeaderboardPage() {
         </div>
 
         <div className="leaderboard-tabs" role="tablist" aria-label="Leaderboard type">
-          {["students", "clubs"].map((item) => (
+          {["students", "managers", "clubs"].map((item) => (
             <button
               key={item}
               type="button"
@@ -84,7 +85,7 @@ function LeaderboardPage() {
 
       <div className="leaderboard-summary">
         <Metric icon={UsersIcon} label="Students tracked" value={data.generatedFrom.students || 0} />
-        <Metric icon={StarIcon} label="Clubs tracked" value={data.generatedFrom.clubs || 0} />
+        <Metric icon={StarIcon} label="Managers ranked" value={data.managers.length || 0} />
         <Metric icon={ZapIcon} label="Registrations" value={data.generatedFrom.registrations || 0} />
       </div>
 
@@ -141,6 +142,31 @@ function LeaderboardPage() {
                       <span>{student.events} events</span>
                       <span>{student.clubs} clubs</span>
                       <strong>{student.points.toLocaleString()} pts</strong>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : tab === "managers" ? (
+            <div className="leaderboard-list">
+              {data.managers.map((manager) => {
+                const color = AVATAR_COLORS[(manager.rank - 1) % AVATAR_COLORS.length];
+                return (
+                  <article key={manager.id} className="card leaderboard-row">
+                    <div className="leaderboard-rank">#{manager.rank}</div>
+                    <div className="leaderboard-avatar" style={{ background: color }}>{manager.avatar}</div>
+                    <div className="leaderboard-main">
+                      <h2>{manager.name}</h2>
+                      <p>{manager.email}</p>
+                      <div className="leaderboard-badges">
+                        <span>{manager.clubs} managed clubs</span>
+                        <span>{manager.members} members</span>
+                      </div>
+                    </div>
+                    <div className="leaderboard-stats">
+                      <span>{manager.events} events</span>
+                      <span>{manager.registrations} registrations</span>
+                      <strong>{manager.points.toLocaleString()} pts</strong>
                     </div>
                   </article>
                 );

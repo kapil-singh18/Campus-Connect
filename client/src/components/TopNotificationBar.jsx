@@ -18,7 +18,8 @@ const TYPE_CONFIG = {
 function getTypeConfig(notification) {
   if (notification.entityType === "event") return TYPE_CONFIG.event;
   if (notification.entityType === "club") return TYPE_CONFIG.club;
-  if (notification.type === "announcement") return TYPE_CONFIG.announcement;
+  if (notification.type === "announcement" || notification.entityType === "announcement") return TYPE_CONFIG.announcement;
+  if (notification.type === "join_request") return TYPE_CONFIG.club;
   if (notification.type === "warning") return TYPE_CONFIG.warning;
   return TYPE_CONFIG.system;
 }
@@ -84,6 +85,8 @@ function TopNotificationBar() {
   const goToEntity = (notification) => {
     if (notification.entityType === "event") navigate(`/events/${notification.entityId}`);
     else if (notification.entityType === "club") navigate(`/clubs/${notification.entityId}`);
+    else if (notification.entityType === "announcement") navigate("/announcements");
+    else if (notification.entityType === "join_request") navigate("/dashboard");
     setNotificationsOpen(false);
   };
 
@@ -92,7 +95,7 @@ function TopNotificationBar() {
     if (activeTab === "all") return true;
     if (activeTab === "events") return n.entityType === "event";
     if (activeTab === "clubs") return n.entityType === "club";
-    if (activeTab === "announcements") return n.type === "announcement";
+    if (activeTab === "announcements") return n.type === "announcement" || n.entityType === "announcement";
     if (activeTab === "unread") return !n.read;
     return true;
   });

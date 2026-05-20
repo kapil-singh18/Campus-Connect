@@ -20,7 +20,17 @@ const clubSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 60,
+      maxlength: 120,
+    },
+    logoUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    bannerUrl: {
+      type: String,
+      trim: true,
+      default: "",
     },
     manager: {
       type: mongoose.Schema.Types.ObjectId,

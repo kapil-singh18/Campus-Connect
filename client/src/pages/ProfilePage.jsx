@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import api from "../api/http.js";
+import { formatDateTime } from "../utils/date.js";
 
 const initialPasswordState = {
   currentPassword: "",
@@ -21,6 +23,7 @@ function ProfilePage() {
   const [loadingPassword, setLoadingPassword] = useState(false);
   const [basicError, setBasicError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -29,6 +32,18 @@ function ProfilePage() {
       email: user?.email || "",
     }));
   }, [user?.email, user?.name]);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const response = await api.get("/notifications");
+        setNotifications(response.data.notifications || []);
+      } catch {
+        setNotifications([]);
+      }
+    };
+    loadNotifications();
+  }, []);
 
   const onBasicChange = (event) => {
     const { name, value } = event.target;
@@ -106,6 +121,22 @@ function ProfilePage() {
       <article className="card p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Account Role</p>
         <p className="mt-1 text-sm font-bold capitalize">{user?.role || "-"}</p>
+      </article>
+
+      <article className="card p-5">
+        <h2 className="text-lg font-bold">Recent Notifications</h2>
+        <div className="mt-3 space-y-2">
+          {notifications.slice(0, 5).map((notification) => (
+            <div key={notification.id} className="rounded-xl p-3" style={{ border: "1px solid var(--border)", background: notification.read ? "var(--panel-muted)" : "var(--brand-soft)" }}>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-[var(--text)]">{notification.message}</p>
+                {!notification.read && <span className="badge badge-brand">Unread</span>}
+              </div>
+              <p className="mt-1 text-xs text-[var(--muted)]">{formatDateTime(notification.createdAt)}</p>
+            </div>
+          ))}
+          {!notifications.length && <p className="text-sm text-[var(--muted)]">No notifications yet.</p>}
+        </div>
       </article>
 
       <article className="card p-5">

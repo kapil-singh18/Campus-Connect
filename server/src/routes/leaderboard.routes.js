@@ -29,8 +29,9 @@ router.get(
   "/",
   authenticate,
   asyncHandler(async (_req, res) => {
-    const [students, registrationRows, clubs, eventRows] = await Promise.all([
-      User.find({ role: "student" }).select("name email joinedClubs createdAt").lean(),
+    const [students, managers, registrationRows, clubs, eventRows] = await Promise.all([
+      User.find({ role: "student" }).select("name email joinedClubs points createdAt").lean(),
+      User.find({ role: "manager" }).select("name email points createdAt").lean(),
       Registration.aggregate([
         {
           $group: {
@@ -42,7 +43,7 @@ router.get(
           },
         },
       ]),
-      Club.find().select("name category members").lean(),
+      Club.find().select("name category manager members").lean(),
       Event.aggregate([
         {
           $lookup: {
@@ -94,7 +95,7 @@ router.get(
         const uniqueClubIds = [...new Set([...joinedClubIds, ...stats.clubIds])];
         const primaryClub = uniqueClubIds.map((clubId) => clubMap.get(clubId)).find(Boolean);
         const joinedClubs = uniqueClubIds.length;
-        const points = stats.registrations * 100 + joinedClubs * 40;
+        const points = student.points || (stats.registrations * 20 + joinedClubs * 50);
 
         return {
           id: student._id,
@@ -133,8 +134,50 @@ router.get(
       .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name))
       .map((club, index) => ({ ...club, rank: index + 1 }));
 
+    const managedClubMap = new Map();
+    clubs.forEach((club) => {
+      const managerId = club.manager?.toString?.();
+      if (!managerId) return;
+      const current = managedClubMap.get(managerId) || { clubs: 0, members: 0 };
+      current.clubs += 1;
+      current.members += club.members?.length || 0;
+      managedClubMap.set(managerId, current);
+    });
+
+    const managerRows = managers
+      .map((manager) => {
+        const stats = managedClubMap.get(manager._id.toString()) || { clubs: 0, members: 0 };
+        const eventStats = eventRows.reduce(
+          (acc, row) => {
+            const club = clubMap.get(row._id?.toString());
+            if (club?.manager?.toString?.() === manager._id.toString()) {
+              acc.events += row.events || 0;
+              acc.registrations += row.registrations || 0;
+            }
+            return acc;
+          },
+          { events: 0, registrations: 0 }
+        );
+        const points = manager.points || (stats.members * 50 + eventStats.registrations * 20);
+        return {
+          id: manager._id,
+          name: manager.name,
+          email: manager.email,
+          avatar: initialsFor(manager.name),
+          clubs: stats.clubs,
+          members: stats.members,
+          events: eventStats.events,
+          registrations: eventStats.registrations,
+          points,
+        };
+      })
+      .filter((manager) => manager.points > 0)
+      .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name))
+      .map((manager, index) => ({ ...manager, rank: index + 1 }));
+
     res.json({
       students: studentRows,
+      managers: managerRows,
       clubs: clubRows,
       generatedFrom: {
         students: students.length,

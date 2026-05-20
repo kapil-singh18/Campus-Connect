@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../api/http.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -30,7 +30,7 @@ function EventDetailsPage() {
 
   const canRegister = user.role === "student";
 
-  const fetchEvent = async () => {
+  const fetchEvent = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get(`/events/${id}`);
@@ -44,11 +44,9 @@ function EventDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, toast]);
 
-  useEffect(() => {
-    fetchEvent();
-  }, [id]);
+  useEffect(() => { fetchEvent(); }, [fetchEvent]);
 
   const handleDelete = async () => {
     if (!window.confirm("Delete this event?")) return;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/http.js";
 import ClubCard from "../components/ClubCard.jsx";
@@ -30,7 +30,7 @@ function ClubsPage() {
   const isManager = user.role === "manager";
   const isStudent = user.role === "student";
 
-  const fetchClubs = async () => {
+  const fetchClubs = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get("/clubs");
@@ -43,9 +43,9 @@ function ClubsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  useEffect(() => { fetchClubs(); }, []);
+  useEffect(() => { fetchClubs(); }, [fetchClubs]);
 
   const openJoinModal = (club) => setJoinTarget({ id: club.id, name: club.name });
 
@@ -56,7 +56,7 @@ function ClubsPage() {
       await api.post(`/clubs/${joinTarget.id}/join`, details);
       await fetchClubs();
       setJoinTarget(null);
-      toast.success("Joined club successfully.");
+      toast.success("Join request sent for manager approval.");
     } catch (joinError) {
       const message = joinError?.response?.data?.message || "Unable to join club.";
       toast.error(message, "Join failed");
@@ -257,7 +257,7 @@ function ClubsPage() {
           )}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {(isStudent ? filteredClubs.filter(c => !c.isMember) : filteredClubs).map((club) => {
-              const canJoin = isStudent && !club.isMember;
+              const canJoin = isStudent && !club.isMember && club.joinRequestStatus !== "pending";
               const isManaged = isManager && (() => {
                 const mid = club.manager?._id || club.manager?.id || club.manager;
                 return mid === user.id;

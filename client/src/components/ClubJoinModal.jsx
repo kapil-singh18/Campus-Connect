@@ -38,7 +38,7 @@ function ClubJoinModal({ open, clubName, initialValues, loading, onClose, onSubm
         <div className="mb-3 flex items-start justify-between gap-2">
           <div>
             <h3 className="text-lg font-extrabold">Join {clubName}</h3>
-            <p className="mt-1 text-xs text-[var(--muted)]">Share basic details before joining this club.</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Share basic details. The club manager will review your request.</p>
           </div>
           <button
             type="button"
@@ -75,7 +75,7 @@ function ClubJoinModal({ open, clubName, initialValues, loading, onClose, onSubm
           </label>
 
           <button type="submit" className="btn-primary w-full" disabled={loading}>
-            {loading ? "Joining..." : "Confirm Join"}
+            {loading ? "Sending..." : "Send Join Request"}
           </button>
         </form>
       </div>

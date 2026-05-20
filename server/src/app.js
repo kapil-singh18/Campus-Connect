@@ -10,10 +10,26 @@ import chatbotRoutes from "./routes/chatbot.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
 import publicRoutes from "./routes/public.routes.js";
 import leaderboardRoutes from "./routes/leaderboard.routes.js";
+import announcementsRoutes from "./routes/announcements.routes.js";
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import { env } from "./config/env.js";
+import { env, isProduction } from "./config/env.js";
 import { apiRateLimiter } from "./middleware/security.js";
+
+const localLoopbackHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+
+const isAllowedLocalOrigin = (origin) => {
+  if (!origin || isProduction) {
+    return false;
+  }
+
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return (protocol === "http:" || protocol === "https:") && localLoopbackHosts.has(hostname);
+  } catch {
+    return false;
+  }
+};
 
 const app = express();
 
@@ -26,7 +42,7 @@ app.use(apiRateLimiter);
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || !env.corsOrigins.length || env.corsOrigins.includes(origin)) {
+      if (!origin || env.corsOrigins.includes(origin) || isAllowedLocalOrigin(origin)) {
         callback(null, true);
         return;
       }
@@ -47,6 +63,7 @@ app.use("/api/clubs", clubsRoutes);
 app.use("/api/events", eventsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/announcements", announcementsRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/notifications", notificationsRoutes);
 
