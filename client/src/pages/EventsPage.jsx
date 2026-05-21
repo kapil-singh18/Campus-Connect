@@ -25,7 +25,7 @@ function EventsPage() {
   const [actionId, setActionId] = useState("");
   const [registrationTarget, setRegistrationTarget] = useState(null);
 
-  const canCreate  = user.role === "admin" || user.role === "manager";
+  const canCreate  = user.role === "manager";
   const canRegister = user.role === "student";
   const isStudent  = user.role === "student";
 

@@ -14,10 +14,16 @@ const announcementSchema = new mongoose.Schema(
       trim: true,
       maxlength: 1600,
     },
+    audience: {
+      type: String,
+      enum: ["club", "students", "managers", "all"],
+      default: "club",
+      index: true,
+    },
     club: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Club",
-      required: true,
+      default: null,
       index: true,
     },
     createdBy: {

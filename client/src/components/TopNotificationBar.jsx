@@ -11,6 +11,7 @@ const TYPE_CONFIG = {
   event:        { label: "Event",        icon: "📅", color: "#2f78c8", bg: "#f0f6ff" },
   club:         { label: "Club",         icon: "🏫", color: "#1a5fa0", bg: "#e8f1fb" },
   announcement: { label: "Announcement", icon: "📢", color: "#d97706", bg: "#fffbeb" },
+  join_request: { label: "Join Request", icon: "📝", color: "#0f766e", bg: "#ecfdf5" },
   system:       { label: "System",       icon: "⚡", color: "#059669", bg: "#ecfdf5" },
   warning:      { label: "Warning",      icon: "⚠️", color: "#dc2626", bg: "#fef2f2" },
 };
@@ -19,7 +20,7 @@ function getTypeConfig(notification) {
   if (notification.entityType === "event") return TYPE_CONFIG.event;
   if (notification.entityType === "club") return TYPE_CONFIG.club;
   if (notification.type === "announcement" || notification.entityType === "announcement") return TYPE_CONFIG.announcement;
-  if (notification.type === "join_request") return TYPE_CONFIG.club;
+  if (notification.type === "join_request" || notification.entityType === "join_request") return TYPE_CONFIG.join_request;
   if (notification.type === "warning") return TYPE_CONFIG.warning;
   return TYPE_CONFIG.system;
 }
@@ -86,7 +87,7 @@ function TopNotificationBar() {
     if (notification.entityType === "event") navigate(`/events/${notification.entityId}`);
     else if (notification.entityType === "club") navigate(`/clubs/${notification.entityId}`);
     else if (notification.entityType === "announcement") navigate("/announcements");
-    else if (notification.entityType === "join_request") navigate("/dashboard");
+    else if (notification.entityType === "join_request") navigate("/join-requests");
     setNotificationsOpen(false);
   };
 
@@ -95,6 +96,7 @@ function TopNotificationBar() {
     if (activeTab === "all") return true;
     if (activeTab === "events") return n.entityType === "event";
     if (activeTab === "clubs") return n.entityType === "club";
+    if (activeTab === "requests") return n.type === "join_request" || n.entityType === "join_request";
     if (activeTab === "announcements") return n.type === "announcement" || n.entityType === "announcement";
     if (activeTab === "unread") return !n.read;
     return true;
@@ -110,6 +112,7 @@ function TopNotificationBar() {
     { id: "unread",        label: `Unread${unreadCount > 0 ? ` (${unreadCount})` : ""}` },
     { id: "events",        label: "Events" },
     { id: "clubs",         label: "Clubs" },
+    { id: "requests",      label: "Requests" },
     { id: "announcements", label: "Announcements" },
   ];
 
@@ -185,7 +188,16 @@ function TopNotificationBar() {
           </button>
 
           {notificationsOpen && (
-            <div className="card scale-in absolute right-0 z-[120] mt-2 w-96 overflow-hidden" style={{ boxShadow: "0 20px 48px rgba(0,0,0,0.14)" }}>
+            <div
+              className="card fade-in-up absolute z-[120] overflow-hidden"
+              style={{
+                boxShadow: "0 20px 48px rgba(0,0,0,0.14)",
+                right: "0.75rem",
+                top: "calc(var(--topbar-h,64px) + 8px)",
+                width: "min(24rem, calc(100vw - 2rem))",
+                transformOrigin: "top right",
+              }}
+            >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3"
                 style={{ background: "linear-gradient(135deg,#2f78c8,#1a5fa0)" }}>
@@ -207,13 +219,13 @@ function TopNotificationBar() {
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-0 border-b border-[var(--border)] overflow-x-auto"
+              <div className="grid grid-cols-6 gap-0 border-b border-[var(--border)] overflow-x-auto"
                 style={{ background: "var(--panel-muted)" }}>
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className="flex-shrink-0 px-3 py-2 text-xs font-semibold transition-colors whitespace-nowrap"
+                    className="px-2.5 py-2 text-[11px] font-semibold transition-colors whitespace-nowrap"
                     style={{
                       color: activeTab === tab.id ? "var(--brand)" : "var(--muted)",
                       borderBottom: activeTab === tab.id ? "2px solid var(--brand)" : "2px solid transparent",
@@ -226,7 +238,7 @@ function TopNotificationBar() {
               </div>
 
               {/* List */}
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-[28rem] overflow-y-auto p-2">
                 {filteredNotifications.length ? filteredNotifications.map((n) => {
                   const meta = n.meta || {};
                   const isExpanded = expandedId === n.id;
@@ -234,39 +246,45 @@ function TopNotificationBar() {
                   const typeConf = getTypeConfig(n);
                   return (
                     <div key={n.id}
-                      className="border-b border-[var(--border-soft)] last:border-0"
+                      className="mb-2 rounded-2xl border border-[var(--border)] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg last:mb-0"
                       style={{ background: n.read ? "var(--panel)" : "var(--brand-soft)" }}>
                       <button className="w-full px-4 py-3 text-left" onClick={() => toggleNotification(n)}>
-                        <div className="flex items-start gap-2.5">
+                        <div className="flex items-start gap-3">
                           {/* Type icon */}
-                          <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-sm"
+                          <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-sm"
                             style={{ background: typeConf.bg, border: `1px solid ${typeConf.color}22` }}>
                             {typeConf.icon}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              {!n.read && <span className="flex-shrink-0 live-dot" style={{ width: 6, height: 6 }} />}
-                              <p className="text-xs font-semibold truncate" style={{ color: "var(--text)" }}>
+                            <div className="flex items-start gap-1.5">
+                              {!n.read && <span className="mt-1 flex-shrink-0 live-dot" style={{ width: 6, height: 6 }} />}
+                              <p className="truncate text-sm font-semibold leading-snug" style={{ color: "var(--text)" }}>
                                 {n.actorName}
                                 {entityLabel && <span className="ml-1 font-normal text-[var(--muted)]">· {entityLabel}</span>}
                               </p>
-                              <span className="ml-auto flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                              <span className="ml-auto flex-shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold"
                                 style={{ background: typeConf.bg, color: typeConf.color }}>
                                 {typeConf.label}
                               </span>
                             </div>
-                            <p className="mt-0.5 text-xs text-[var(--muted)] line-clamp-2">{n.message}</p>
-                            <p className="mt-0.5 text-[10px] text-[var(--muted)]">{formatDateTime(n.createdAt)}</p>
+                            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)] line-clamp-2">{n.message}</p>
+                            <p className="mt-1 text-[10px] text-[var(--muted)]">{formatDateTime(n.createdAt)}</p>
                           </div>
                         </div>
                       </button>
                       {isExpanded && (n.entityId) && (
-                        <div className="border-t border-[var(--border)] px-4 py-2 fade-in-fast flex items-center gap-2">
+                        <div className="border-t border-[var(--border)] px-4 py-3 fade-in-fast flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-[var(--text)]">Open this item</p>
+                            <p className="truncate text-[10px] text-[var(--muted)]">
+                              {n.entityType === "join_request" ? "Review membership requests" : "View the related record"}
+                            </p>
+                          </div>
                           <button
-                            className="text-xs font-semibold text-[var(--brand)] hover:underline"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[var(--brand)] transition hover:bg-[var(--brand-soft)]"
                             onClick={() => goToEntity(n)}
                           >
-                            Open {n.entityType} →
+                            {n.entityType === "join_request" ? "Open Join Requests" : `Open ${n.entityType}`}
                           </button>
                         </div>
                       )}

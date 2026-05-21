@@ -33,6 +33,9 @@ export const env = {
   corsOrigins: parseList(process.env.CORS_ORIGINS || process.env.CLIENT_URL),
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
+  groqApiKey: process.env.GROQ_API_KEY || "",
+  groqApiUrl: process.env.GROQ_API_URL || "",
+  groqModel: process.env.GROQ_MODEL || "groq-1",
   witApiToken: process.env.WIT_API_TOKEN || "",
   witApiVersion: process.env.WIT_API_VERSION || "20230215",
 };

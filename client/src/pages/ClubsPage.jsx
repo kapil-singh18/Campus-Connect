@@ -25,7 +25,7 @@ function ClubsPage() {
   const [filterCat, setFilterCat] = useState("");
   const [form, setForm] = useState({ name: "", description: "", category: "" });
 
-  const canCreate = user.role === "admin" || user.role === "manager";
+  const canCreate = user.role === "manager";
   const isAdmin   = user.role === "admin";
   const isManager = user.role === "manager";
   const isStudent = user.role === "student";

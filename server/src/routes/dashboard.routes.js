@@ -17,17 +17,40 @@ router.get(
   authenticate,
   authorize("admin"),
   asyncHandler(async (_req, res) => {
-    const [users, clubs, events, registrations] = await Promise.all([
+    const [users, clubs, events, registrations, activityLogs, announcements] = await Promise.all([
       User.countDocuments(),
       Club.countDocuments(),
       Event.countDocuments(),
       Registration.countDocuments(),
+      ActivityLog.find().sort({ createdAt: -1 }).limit(10).select("actorName action details createdAt club event"),
+      Announcement.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate("club", "name")
+        .populate("createdBy", "name email role"),
     ]);
 
     const latestEvents = await Event.find()
       .sort({ date: 1 })
       .limit(6)
       .populate("club", "name");
+
+    const recentActivity = activityLogs.map((log) => ({
+      id: log._id,
+      actorName: log.actorName,
+      action: log.action,
+      details: log.details,
+      createdAt: log.createdAt,
+    }));
+
+    const announcementFeed = announcements.map((announcement) => ({
+      id: announcement._id,
+      title: announcement.title,
+      content: announcement.content,
+      club: announcement.club?.name || "Campus-wide",
+      audience: announcement.audience,
+      createdAt: announcement.createdAt,
+    }));
 
     res.json({
       stats: { users, clubs, events, registrations },
@@ -39,6 +62,8 @@ router.get(
         club: event.club?.name || "Unknown Club",
         status: getEventStatus(event.date),
       })),
+      activityLogs: recentActivity,
+      announcements: announcementFeed,
     });
   })
 );

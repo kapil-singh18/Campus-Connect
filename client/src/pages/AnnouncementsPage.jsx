@@ -5,7 +5,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import { formatDateTime } from "../utils/date.js";
 import { MegaphoneIcon, PlusIcon } from "../components/icons.jsx";
 
-const emptyForm = { title: "", content: "", club: "" };
+const emptyForm = { title: "", content: "", club: "", audience: "club" };
 
 function AnnouncementsPage() {
   const { user } = useAuth();
@@ -20,6 +20,7 @@ function AnnouncementsPage() {
   const [search, setSearch] = useState("");
 
   const canManage = user.role === "manager" || user.role === "admin";
+  const isAdmin = user.role === "admin";
 
   const load = useCallback(async () => {
     try {
@@ -29,13 +30,13 @@ function AnnouncementsPage() {
         canManage ? api.get("/clubs") : Promise.resolve({ data: { clubs: [] } }),
       ]);
       setAnnouncements(announcementRes.data.announcements || []);
-      setClubs((clubRes.data.clubs || []).filter((club) => club.canManage || user.role === "admin"));
+      setClubs((clubRes.data.clubs || []).filter((club) => club.canManage || isAdmin));
     } catch (error) {
       toast.error(error?.response?.data?.message || "Unable to load announcements.");
     } finally {
       setLoading(false);
     }
-  }, [canManage, user.role, toast]);
+  }, [canManage, isAdmin, toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -49,7 +50,7 @@ function AnnouncementsPage() {
 
   const startCreate = () => {
     setEditingId("");
-    setForm({ ...emptyForm, club: clubs[0]?.id || "" });
+    setForm({ ...emptyForm, club: clubs[0]?.id || "", audience: isAdmin ? "all" : "club" });
     setShowForm(true);
   };
 
@@ -59,6 +60,7 @@ function AnnouncementsPage() {
       title: announcement.title,
       content: announcement.content,
       club: announcement.club?._id || announcement.club?.id || announcement.club || "",
+      audience: announcement.audience || "club",
     });
     setShowForm(true);
   };
@@ -71,11 +73,13 @@ function AnnouncementsPage() {
         await api.put(`/announcements/${editingId}`, {
           title: form.title,
           content: form.content,
+          audience: form.audience,
+          club: form.audience === "club" ? form.club : null,
         });
         toast.success("Announcement updated.");
       } else {
         await api.post("/announcements", form);
-        toast.success("Announcement posted. Club members were notified.");
+        toast.success(form.audience === "club" ? "Announcement posted. Club members were notified." : "Announcement posted across the selected audience.");
       }
       setForm(emptyForm);
       setEditingId("");
@@ -131,7 +135,33 @@ function AnnouncementsPage() {
       {showForm && canManage && (
         <form className="card p-5 space-y-3" onSubmit={submit}>
           <h2 className="text-base font-bold">{editingId ? "Edit Announcement" : "Make Announcement"}</h2>
-          {!editingId && (
+          {isAdmin ? (
+            <select
+              className="field"
+              required
+              value={form.audience}
+              onChange={(event) => setForm((prev) => ({ ...prev, audience: event.target.value }))}
+            >
+              <option value="all">All Users</option>
+              <option value="students">All Students</option>
+              <option value="managers">All Managers</option>
+              <option value="club">Club Members</option>
+            </select>
+          ) : null}
+          {!editingId && form.audience === "club" && (
+            <select
+              className="field"
+              required
+              value={form.club}
+              onChange={(event) => setForm((prev) => ({ ...prev, club: event.target.value }))}
+            >
+              <option value="">Select club</option>
+              {clubs.map((club) => (
+                <option key={club.id} value={club.id}>{club.name}</option>
+              ))}
+            </select>
+          )}
+          {editingId && form.audience === "club" && (
             <select
               className="field"
               required
@@ -154,7 +184,7 @@ function AnnouncementsPage() {
           <textarea
             className="field"
             rows={4}
-            placeholder="Write the update for students..."
+            placeholder={form.audience === "club" ? "Write the update for students..." : "Write the campus-wide update..."}
             required
             value={form.content}
             onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
@@ -182,6 +212,7 @@ function AnnouncementsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span className="badge badge-brand">{announcement.club?.name || "Club"}</span>
+                    <span className="badge">{announcement.audienceLabel || announcement.audience || "club"}</span>
                     <span className="text-xs text-[var(--muted)]">{formatDateTime(announcement.createdAt)}</span>
                   </div>
                   <h2 className="text-base font-extrabold text-[var(--text)]">{announcement.title}</h2>

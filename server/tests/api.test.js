@@ -16,6 +16,8 @@ const { User } = await import("../src/models/User.js");
 const { Club } = await import("../src/models/Club.js");
 const { Event } = await import("../src/models/Event.js");
 const { Registration } = await import("../src/models/Registration.js");
+const { JoinRequest } = await import("../src/models/JoinRequest.js");
+const { Notification } = await import("../src/models/Notification.js");
 const { createToken } = await import("../src/utils/auth.js");
 
 let mongoServer;
@@ -52,6 +54,8 @@ describe("Campus Connect API", () => {
   beforeEach(async () => {
     await Promise.all([
       Registration.deleteMany({}),
+      JoinRequest.deleteMany({}),
+      Notification.deleteMany({}),
       Event.deleteMany({}),
       Club.deleteMany({}),
       User.deleteMany({}),
@@ -106,6 +110,125 @@ describe("Campus Connect API", () => {
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.user.name).toBe("Updated Student");
     expect(updateRes.body.user.email).toBe("profile.updated@test.local");
+  });
+
+  it("prevents admin from creating clubs and events", async () => {
+    const admin = await createUser({ role: "admin", email: "admin-block@test.local" });
+    const clubManager = await createUser({ role: "manager", email: "manager-block@test.local" });
+
+    const adminToken = createToken(admin._id.toString());
+
+    const clubRes = await request(app)
+      .post("/api/clubs")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        name: "Admin Club",
+        description: "desc",
+        category: "Tech",
+        managerId: clubManager._id.toString(),
+      });
+    expect(clubRes.status).toBe(403);
+
+    const club = await Club.create({
+      name: "Event Club",
+      description: "desc",
+      category: "Tech",
+      manager: clubManager._id,
+      members: [],
+    });
+
+    const eventRes = await request(app)
+      .post("/api/events")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        club: club._id.toString(),
+        title: "Admin Event",
+        description: "desc",
+        category: "Tech",
+        date: eventDate.toISOString(),
+        venue: "Hall A",
+        maxParticipants: 50,
+        registrationDeadline: registrationDeadline.toISOString(),
+        posterUrl: "https://example.com/poster.png",
+      });
+    expect(eventRes.status).toBe(403);
+  });
+
+  it("creates and approves a join request end to end", async () => {
+    const manager = await createUser({ role: "manager", email: "join-manager@test.local" });
+    const student = await createUser({ role: "student", email: "join-student@test.local" });
+
+    const club = await Club.create({
+      name: "Join Flow Club",
+      description: "desc",
+      category: "Technology",
+      manager: manager._id,
+      members: [],
+    });
+
+    const studentToken = createToken(student._id.toString());
+    const managerToken = createToken(manager._id.toString());
+
+    const joinRes = await request(app)
+      .post(`/api/clubs/${club._id}/join`)
+      .set("Authorization", `Bearer ${studentToken}`)
+      .send({ name: student.name, email: student.email });
+    expect(joinRes.status).toBe(200);
+    expect(joinRes.body.status).toBe("pending");
+
+    const requestList = await request(app)
+      .get("/api/clubs/join-requests")
+      .set("Authorization", `Bearer ${managerToken}`);
+    expect(requestList.status).toBe(200);
+    expect(requestList.body.requests).toHaveLength(1);
+
+    const requestId = requestList.body.requests[0].id;
+    const acceptRes = await request(app)
+      .patch(`/api/clubs/join-requests/${requestId}`)
+      .set("Authorization", `Bearer ${managerToken}`)
+      .send({ action: "accept" });
+
+    expect(acceptRes.status).toBe(200);
+
+    const reloadedClub = await Club.findById(club._id);
+    const updatedStudent = await User.findById(student._id);
+    const updatedManager = await User.findById(manager._id);
+
+    expect(reloadedClub.members.map((memberId) => memberId.toString())).toContain(student._id.toString());
+    expect(updatedStudent.points).toBeGreaterThan(0);
+    expect(updatedManager.points).toBeGreaterThan(0);
+  });
+
+  it("delivers global announcements to students and notifications", async () => {
+    const admin = await createUser({ role: "admin", email: "announce-admin@test.local" });
+    const student = await createUser({ role: "student", email: "announce-student@test.local" });
+    const adminToken = createToken(admin._id.toString());
+    const studentToken = createToken(student._id.toString());
+
+    const postRes = await request(app)
+      .post("/api/announcements")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        title: "Campus Update",
+        content: "Library hours have changed.",
+        audience: "students",
+      });
+
+    expect(postRes.status).toBe(201);
+
+    const feedRes = await request(app)
+      .get("/api/announcements")
+      .set("Authorization", `Bearer ${studentToken}`);
+
+    expect(feedRes.status).toBe(200);
+    expect(feedRes.body.announcements.some((announcement) => announcement.title === "Campus Update")).toBe(true);
+
+    const notificationsRes = await request(app)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${studentToken}`);
+
+    expect(notificationsRes.status).toBe(200);
+    expect(notificationsRes.body.notifications.some((notification) => notification.message === "Campus Update")).toBe(true);
   });
 
   it("prevents manager from creating events for another manager's club", async () => {

@@ -165,6 +165,10 @@ router.post(
       throw new HttpError(400, "Invalid club id.");
     }
 
+    if (req.user.role === "admin") {
+      throw new HttpError(403, "Admins cannot create events.");
+    }
+
     const club = await Club.findById(clubId);
     if (!club) {
       throw new HttpError(404, "Club not found.");

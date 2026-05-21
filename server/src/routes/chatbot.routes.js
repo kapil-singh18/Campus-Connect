@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { GoogleGenAI } from "@google/genai";
+import { generateReplyWithFallback } from "../services/aiFallbackService.js";
 import { authenticate } from "../middleware/auth.js";
 import { Club } from "../models/Club.js";
 import { Event } from "../models/Event.js";
@@ -639,61 +639,46 @@ Latest user question:
 ${trimmedMessage}
 `;
 
-    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const modelsToTry = Array.from(new Set([env.geminiModel, "gemini-2.0-flash"])).filter(Boolean);
-    let lastGeminiFailure = null;
 
-    for (const model of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            temperature: 0.8,
-            maxOutputTokens: 420,
-            responseMimeType: "application/json",
-          },
-        });
+    // Use centralized AI fallback service which tries Gemini then GROQ.
+    const aiResult = await generateReplyWithFallback({
+      prompt,
+      geminiKey: env.geminiApiKey,
+      geminiModels: modelsToTry,
+      groqKey: env.groqApiKey,
+      groqUrl: env.groqApiUrl,
+      groqModel: env.groqModel,
+    });
 
-        const rawText = String(response.text || "").trim();
-        if (!rawText) continue;
-
-        const parsed = extractJsonObjectFromText(rawText);
-        if (parsed && typeof parsed.reply === "string" && parsed.reply.trim()) {
-          res.json({
-            reply: parsed.reply.trim(),
-            suggestions: sanitizeSuggestions(parsed.suggestions, fallbackSuggestions),
-            provider: "gemini",
-            engineVersion: CHATBOT_ENGINE_VERSION,
-          });
-          return;
-        }
-
+    if (aiResult && aiResult.success && aiResult.rawText) {
+      const parsed = extractJsonObjectFromText(aiResult.rawText);
+      if (parsed && typeof parsed.reply === "string" && parsed.reply.trim()) {
         res.json({
-          reply: rawText,
-          suggestions: fallbackSuggestions,
-          provider: "gemini",
+          reply: parsed.reply.trim(),
+          suggestions: sanitizeSuggestions(parsed.suggestions, fallbackSuggestions),
+          provider: aiResult.provider || "ai",
           engineVersion: CHATBOT_ENGINE_VERSION,
         });
         return;
-      } catch (error) {
-        lastGeminiFailure = mapGeminiFailure(error);
       }
+
+      res.json({
+        reply: aiResult.rawText,
+        suggestions: fallbackSuggestions,
+        provider: aiResult.provider || "ai",
+        engineVersion: CHATBOT_ENGINE_VERSION,
+      });
+      return;
     }
 
-    if (lastGeminiFailure) {
-      console.warn(
-        `[chatbot] Gemini unavailable. reason=${lastGeminiFailure.reason} status=${lastGeminiFailure.status || "n/a"} message=${lastGeminiFailure.message || "none"}`
-      );
-    }
-
+    // both providers failed: return graceful fallback
+    console.warn(`[chatbot] Both Gemini and GROQ failed or returned no usable output`);
     res.json({
       reply: fallbackReply,
       suggestions: fallbackSuggestions,
       provider: "fallback",
-      fallbackReason: lastGeminiFailure?.reason || "gemini_unavailable_or_quota",
-      fallbackStatus: lastGeminiFailure?.status || null,
-      fallbackMessage: lastGeminiFailure?.message || "",
+      fallbackReason: "providers_unavailable",
       engineVersion: CHATBOT_ENGINE_VERSION,
     });
   })

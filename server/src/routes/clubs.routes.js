@@ -67,22 +67,14 @@ router.post(
       throw new HttpError(400, "Name, description, and category are required.");
     }
 
+    if (req.user.role === "admin") {
+      throw new HttpError(403, "Admins cannot create clubs.");
+    }
+
     let selectedManagerId = req.user._id.toString();
 
-    if (req.user.role === "admin") {
-      if (managerId) {
-        if (!mongoose.Types.ObjectId.isValid(managerId)) {
-          throw new HttpError(400, "Invalid managerId.");
-        }
-
-        const manager = await User.findById(managerId);
-        if (!manager || manager.role !== "manager") {
-          throw new HttpError(400, "managerId must reference a valid Club Manager.");
-        }
-        selectedManagerId = managerId;
-      }
-    } else if (req.user.role !== "manager") {
-      throw new HttpError(403, "Only admin or manager can create clubs.");
+    if (req.user.role !== "manager") {
+      throw new HttpError(403, "Only club managers can create clubs.");
     }
 
     const existing = await Club.findOne({ name: name.trim() });
@@ -217,10 +209,9 @@ router.patch(
       actorName: req.user.name,
       recipientIds: [request.student],
       type: action === "accept" ? "join_request_accepted" : "join_request_rejected",
-      message:
-        action === "accept"
-          ? `Your request to join ${request.club.name} was accepted.`
-          : `Your request to join ${request.club.name} was rejected.`,
+      message: action === "accept"
+        ? "Your join request was accepted."
+        : "Your join request was rejected.",
       entityType: "club",
       entityId: request.club._id,
       meta: {

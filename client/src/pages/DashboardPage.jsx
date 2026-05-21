@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/http.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { useToast } from "../context/ToastContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 import AreaChart from "../components/AreaChart.jsx";
 import EmptyState from "../components/EmptyState.jsx";
@@ -86,10 +85,9 @@ const STAT_MAP = {
 /* ─── Component ────────────────────────────────────────────────── */
 function DashboardPage() {
   const { user } = useAuth();
-  const toast = useToast();
   const [data, setData] = useState(null);
   const [notifications, setNotifications] = useState([]);
-  const [joinRequests, setJoinRequests] = useState([]);
+  const [leaderboardPreview, setLeaderboardPreview] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeChart, setActiveChart] = useState("registrations");
@@ -98,12 +96,13 @@ function DashboardPage() {
     const fetchDashboard = async () => {
       setLoading(true);
       try {
-        const response = await api.get(`/dashboard/${user.role}`);
-        setData(response.data);
-        if (user.role === "manager") {
-          const requests = await api.get("/clubs/join-requests");
-          setJoinRequests(requests.data.requests || []);
-        }
+        const [dashboardResponse, leaderboardResponse] = await Promise.all([
+          api.get(`/dashboard/${user.role}`),
+          api.get("/leaderboard").catch(() => ({ data: null })),
+        ]);
+
+        setData(dashboardResponse.data);
+        setLeaderboardPreview(leaderboardResponse?.data?.students?.slice(0, 3) || []);
       } catch (e) {
         setError(e?.response?.data?.message || "Unable to load dashboard.");
       } finally {
@@ -133,20 +132,21 @@ function DashboardPage() {
     return memberData;
   }, [activeChart]);
 
-  const titleByRole = { admin: "Admin Dashboard", manager: "Club Manager", student: "My Dashboard" };
+  const activityEntries = useMemo(() => {
+    if (data?.activityLogs?.length) return data.activityLogs;
+    if (user.role === "manager" && notifications.length) return notifications.slice(0, 6);
+    return [
+      { id: "r1", message: "Rohan Mehta registered for Hackathon 2026", createdAt: new Date(Date.now() - 5 * 60000).toISOString(), actorName: "Rohan Mehta" },
+      { id: "r2", message: "Design Studio Club gained 3 new members", createdAt: new Date(Date.now() - 20 * 60000).toISOString(), actorName: "System" },
+      { id: "r3", message: "Priya Sharma joined Robotics Club", createdAt: new Date(Date.now() - 45 * 60000).toISOString(), actorName: "Priya Sharma" },
+      { id: "r4", message: "Cultural Fest capacity updated to 250", createdAt: new Date(Date.now() - 2 * 3600000).toISOString(), actorName: "Admin" },
+      { id: "r5", message: "AI Workshop seats filling up fast — 8 left!", createdAt: new Date(Date.now() - 3 * 3600000).toISOString(), actorName: "System" },
+    ];
+  }, [data?.activityLogs, notifications, user.role]);
 
-  const handleJoinRequest = async (requestId, action) => {
-    try {
-      await api.patch(`/clubs/join-requests/${requestId}`, { action });
-      const requests = await api.get("/clubs/join-requests");
-      setJoinRequests(requests.data.requests || []);
-      const dashboard = await api.get(`/dashboard/${user.role}`);
-      setData(dashboard.data);
-      toast.success(action === "accept" ? "Join request accepted." : "Join request rejected.");
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Unable to review request.");
-    }
-  };
+  const topStudents = leaderboardPreview.length ? leaderboardPreview : LEADERBOARD.slice(0, 3);
+
+  const titleByRole = { admin: "Admin Dashboard", manager: "Club Manager", student: "My Dashboard" };
 
   /* ─── Loading skeleton ─────────────────────── */
   if (loading) {
@@ -188,9 +188,11 @@ function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/events" className="btn-secondary">
-            <CalendarIcon className="h-4 w-4" /> Browse Events
-          </Link>
+          {user.role === "manager" && (
+            <Link to="/join-requests" className="btn-primary">
+              <BellIcon className="h-4 w-4" /> Join Requests ({data?.stats?.pendingJoinRequests ?? 0})
+            </Link>
+          )}
           {(user.role === "admin" || user.role === "manager") && (
             <Link to="/announcements" className="btn-primary">
               <PlusIcon className="h-4 w-4" /> Make Announcement
@@ -277,7 +279,7 @@ function DashboardPage() {
               </Link>
             </div>
             <div className="space-y-2">
-              {LEADERBOARD.slice(0, 3).map((s, i) => (
+              {topStudents.map((s, i) => (
                 <div key={s.rank} className="flex items-center gap-2.5 rounded-xl p-2.5 transition-colors hover:bg-[var(--panel-muted)]">
                   <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
                     style={{ background: AVATAR_COLORS[i] }}>
@@ -399,13 +401,7 @@ function DashboardPage() {
           </div>
 
           <div className="space-y-3">
-            {(user.role === "manager" && notifications.length ? notifications.slice(0, 6) : [
-              { id: "r1", message: "Rohan Mehta registered for Hackathon 2026", createdAt: new Date(Date.now() - 5 * 60000).toISOString(), entityType: "event", entityId: "e1", actorName: "Rohan Mehta" },
-              { id: "r2", message: "Design Studio Club gained 3 new members", createdAt: new Date(Date.now() - 20 * 60000).toISOString(), entityType: "club", entityId: "c1", actorName: "System" },
-              { id: "r3", message: "Priya Sharma joined Robotics Club", createdAt: new Date(Date.now() - 45 * 60000).toISOString(), entityType: "club", entityId: "c2", actorName: "Priya Sharma" },
-              { id: "r4", message: "Cultural Fest capacity updated to 250", createdAt: new Date(Date.now() - 2 * 3600000).toISOString(), entityType: "event", entityId: "e2", actorName: "Admin" },
-              { id: "r5", message: "AI Workshop seats filling up fast — 8 left!", createdAt: new Date(Date.now() - 3 * 3600000).toISOString(), entityType: "event", entityId: "e4", actorName: "System" },
-            ]).map((item, i) => (
+            {activityEntries.map((item, i) => (
               <div key={item.id}
                 className={`flex items-start gap-2.5 fade-in stagger-${i + 1}`}>
                 <div className="mt-1 h-7 w-7 flex-shrink-0 flex items-center justify-center rounded-full text-[10px] font-bold text-white"
@@ -413,7 +409,7 @@ function DashboardPage() {
                   {item.actorName?.[0] || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs leading-snug" style={{ color: "var(--text)" }}>{item.message}</p>
+                  <p className="text-xs leading-snug" style={{ color: "var(--text)" }}>{item.details || item.message}</p>
                   <p className="text-[10px] mt-0.5" style={{ color: "var(--muted)" }}>
                     {item.createdAt ? formatDateTime(item.createdAt) : "Just now"}
                   </p>
@@ -451,35 +447,7 @@ function DashboardPage() {
       ) : null}
 
       {user.role === "manager" && (
-        <div className="card p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 style={{ fontFamily: "Outfit,sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--text)" }}>
-              Join Requests
-            </h2>
-            <span className="badge badge-brand">{joinRequests.length} pending</span>
-          </div>
-          {joinRequests.length ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              {joinRequests.map((request) => (
-                <article key={request.id} className="rounded-xl p-4" style={{ border: "1px solid var(--border)", background: "var(--panel-muted)" }}>
-                  <p className="text-sm font-bold text-[var(--text)]">{request.studentMeta?.name || request.student?.name}</p>
-                  <p className="mt-1 text-xs text-[var(--muted)]">{request.club?.name} - {request.studentMeta?.department || "Department not provided"}</p>
-                  <p className="mt-1 text-xs text-[var(--muted)]">{request.studentMeta?.email || request.student?.email}</p>
-                  <div className="mt-3 flex gap-2">
-                    <button className="btn-primary text-xs" type="button" onClick={() => handleJoinRequest(request.id, "accept")}>
-                      Accept
-                    </button>
-                    <button className="btn-ghost text-xs text-red-600" type="button" onClick={() => handleJoinRequest(request.id, "reject")}>
-                      Reject
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-[var(--muted)]">No pending join requests right now.</p>
-          )}
-        </div>
+        null
       )}
 
       {/* ── Student: Joined Clubs ─────────────────────── */}
