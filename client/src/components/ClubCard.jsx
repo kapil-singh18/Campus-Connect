@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 function ClubCard({ club, canJoin, canLeave, onJoin, onLeave, joining, isManaged, isAdmin }) {
   return (
-    <article className="card card-hover fade-in flex h-full flex-col p-5">
+    <article className="card card-hover fade-in flex h-full min-h-[17rem] flex-col p-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-3">
@@ -38,7 +38,7 @@ function ClubCard({ club, canJoin, canLeave, onJoin, onLeave, joining, isManaged
       </div>
 
       {/* Description */}
-      <p className="line-clamp-3 flex-1 text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
+      <p className="line-clamp-3 min-h-[4.5rem] flex-1 text-sm leading-6" style={{ color: "var(--muted)" }}>
         {club.description || "No description available."}
       </p>
 

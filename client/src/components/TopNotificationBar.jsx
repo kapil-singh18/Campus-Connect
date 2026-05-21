@@ -128,7 +128,7 @@ function TopNotificationBar() {
         borderBottom: "1px solid var(--glass-border)",
       }}
     >
-      {/* Left — greeting */}
+      {/* Left greeting */}
       <div className="hidden md:block">
         <p style={{ fontFamily: "Outfit,sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--text)" }}>
           {greeting}, <span style={{ color: "var(--brand)" }}>{user?.name?.split(" ")[0]}</span> 👋
@@ -138,7 +138,7 @@ function TopNotificationBar() {
         </p>
       </div>
 
-      {/* Right — actions */}
+      {/* Right actions */}
       <div className="ml-auto flex items-center gap-2">
         {/* Search */}
         <div className="relative" ref={searchRef}>
@@ -189,12 +189,14 @@ function TopNotificationBar() {
 
           {notificationsOpen && (
             <div
-              className="card fade-in-up absolute z-[120] overflow-hidden"
+              className="notification-dropdown card fade-in-up fixed z-[140] overflow-hidden"
               style={{
+                position: "fixed",
                 boxShadow: "0 20px 48px rgba(0,0,0,0.14)",
-                right: "0.75rem",
-                top: "calc(var(--topbar-h,64px) + 8px)",
+                right: "clamp(0.75rem, 2vw, 1.5rem)",
+                top: "calc(var(--topbar-h, 64px) + 0.75rem)",
                 width: "min(24rem, calc(100vw - 2rem))",
+                maxHeight: "calc(100vh - var(--topbar-h, 64px) - 1.5rem)",
                 transformOrigin: "top right",
               }}
             >
@@ -238,7 +240,7 @@ function TopNotificationBar() {
               </div>
 
               {/* List */}
-              <div className="max-h-[28rem] overflow-y-auto p-2">
+              <div className="notification-list overflow-y-auto p-2">
                 {filteredNotifications.length ? filteredNotifications.map((n) => {
                   const meta = n.meta || {};
                   const isExpanded = expandedId === n.id;

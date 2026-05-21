@@ -370,6 +370,15 @@ body::before {
   min-width: 0;
 }
 
+.notification-dropdown {
+  border-radius: 1rem;
+}
+
+.notification-list {
+  max-height: min(28rem, calc(100vh - var(--topbar-h, 64px) - 9.5rem));
+  overscroll-behavior: contain;
+}
+
 /* Real-data leaderboard */
 .leaderboard-page {
   display: flex;
@@ -688,6 +697,18 @@ body::before {
     right: 0.75rem !important;
     top: calc(var(--topbar-h, 56px) + 0.5rem) !important;
     width: auto !important;
+  }
+
+  .notification-dropdown {
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    top: calc(var(--topbar-h, 56px) + 0.5rem) !important;
+    width: auto !important;
+    max-height: calc(100vh - var(--topbar-h, 56px) - 1rem) !important;
+  }
+
+  .notification-list {
+    max-height: calc(100vh - var(--topbar-h, 56px) - 10rem);
   }
 
   .app-sidebar {

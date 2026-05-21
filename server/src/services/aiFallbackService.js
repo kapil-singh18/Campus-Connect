@@ -15,7 +15,6 @@ export async function generateReplyWithFallback({
   // Try Gemini first
   if (geminiKey && geminiModels.length) {
     try {
-      console.info("[chatbot] Using Gemini API");
       const gemini = await generateWithGemini({
         apiKey: geminiKey,
         models: geminiModels,
@@ -25,7 +24,6 @@ export async function generateReplyWithFallback({
       });
 
       if (gemini && gemini.rawText) {
-        console.info("[chatbot] Gemini response OK");
         return { success: true, provider: gemini.provider, rawText: gemini.rawText };
       }
     } catch (err) {
@@ -37,10 +35,8 @@ export async function generateReplyWithFallback({
   // Fallback to GROQ
   if (groqKey && groqUrl) {
     try {
-      console.info("[chatbot] Trying GROQ API as fallback");
       const groq = await generateWithGroq({ apiKey: groqKey, apiUrl: groqUrl, model: groqModel, prompt, timeoutMs: groqTimeoutMs });
       if (groq && groq.rawText) {
-        console.info("[chatbot] GROQ response successful");
         return { success: true, provider: groq.provider, rawText: groq.rawText, raw: groq.raw };
       }
     } catch (err) {

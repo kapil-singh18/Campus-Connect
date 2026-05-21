@@ -20,7 +20,7 @@ function renderInline(text) {
     rest = rest.slice(idx + match.length);
   }
   // handle simple *italic* inside plain strings
-  return parts.flatMap((seg, i) => {
+  return parts.flatMap((seg) => {
     if (typeof seg !== "string") return seg;
     const out = [];
     let r = seg;
